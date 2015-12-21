@@ -2,6 +2,7 @@
 
 #include "Common/defines.h"
 #include "Bridge/IAdapter.h"
+#include "Bridge/ConfigManager.h"
 
 #include <alljoyn/Status.h>
 
@@ -85,6 +86,7 @@ namespace bridge
     BridgeDeviceList                          m_deviceList;
     shared_ptr<AdapterSignalListener>         m_adapterSignalListener;
     std::vector<IAdapter::RegistrationHandle> m_registeredSignalListeners;
+    ConfigManager m_configManager;
   };
 }
 

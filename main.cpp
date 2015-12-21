@@ -66,7 +66,7 @@ int main(int /*argc*/, char* /*argv*/ [])
   if (ret != 0)
   {
     std::cout << "EnumDevices:" << ret << std::endl;
-    exit(0);
+    return 1;
   }
 
   for (auto const& d : deviceList)
@@ -77,6 +77,7 @@ int main(int /*argc*/, char* /*argv*/ [])
     std::cout << std::endl;
   }
 
+  getchar();
   return 0;
 }
 

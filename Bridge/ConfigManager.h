@@ -13,51 +13,44 @@ namespace bridge
   class IAdapter;
   class DeviceSystemBridge;
 
-  class ConfigManager
+  class ConfigManager : private ajn::BusListener, private ajn::SessionListener, private ajn::SessionPortListener
   {
   public:
-    ConfigManager();
+    ConfigManager(DeviceSystemBridge&, IAdapter&);
     ~ConfigManager();
 
-    int32_t Initialize(shared_ptr<DeviceSystemBridge> const& bridge);
-    int32_t ConnectToAllJoyn(shared_ptr<IAdapter> const& adapter);
-    int32_t Shutdown();
+    QStatus Initialize();
+    QStatus ConnectToAllJoyn();
+    QStatus Shutdown();
 
     bool IsConfigurationAccessSecured();
     bool IsDeviceAccessSecured();
-    bool GetObjectConfigItem(shared_ptr<IAdapter> const& adapter);
+    bool GetObjectConfigItem();
     void ToFile();
 
     shared_ptr<BridgeConfig> GetBridgeConfig();
 
   private:
-    int32_t ShutdownAllJoyn();
-    int32_t InitializeCSPBusObjects();
-    int32_t BuildServiceName();
+    QStatus ShutdownAllJoyn();
+    QStatus InitializeCSPBusObjects();
+    QStatus BuildServiceName();
 
-    class BusListener : public ajn::BusListener
-    {
-    };
+    /* ajn::SessionPortListener */
+    virtual bool AcceptSessionJoiner(ajn::SessionPort, const char *joiner, const ajn::SessionOpts&);
+    virtual void SessionJoined(ajn::SessionPort, ajn::SessionId, const char *joiner);
 
-    class SessionListener : public ajn::SessionListener
-    {
-    };
-
-    class SessionPortListener : public ajn::SessionPortListener
-    {
-    };
+    /* ajn::SessionListener */
+    virtual void SessionMemberRemoved(ajn::SessionId, const char *uniqueName);
 
   private:
-    shared_ptr<DeviceSystemBridge>      m_parent;
-    shared_ptr<IAdapter>                m_adapter;
-    std::auto_ptr<ajn::BusAttachment>   m_busAttachment;
-    BusListener                         m_busListener;
-    SessionListener                     m_sessionListener;
-    SessionPortListener                 m_sessionPortListener;
-    std::string                         m_serviceName;
+    DeviceSystemBridge& m_parent;
+    IAdapter& m_adapter;
+    shared_ptr<ajn::BusAttachment> m_busAttachment;
+    std::string m_serviceName;
 
     // BridgeAuthHandler
-    BridgeConfig                        m_bridgeConfig;
+    BridgeConfig m_bridgeConfig;
+    ajn::SessionPort m_sessionPort;
   };
 };
 

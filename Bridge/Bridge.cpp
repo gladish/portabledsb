@@ -10,7 +10,7 @@ namespace
 
   int32_t const kWaitTimeoutForAdapterOperation = 20000; //ms
   std::string const kDeviceArrivalSignal = "Device_Arrival";
-  std::string const kDeviceArriaveDeviceHandle = "Device_Handle";
+  std::string const kDeviceArrivalDeviceHandle = "Device_Handle";
   std::string const kDeviceRemovalSignal = "Device_Removal";
   std::string const kDeviceRemovalDeviceHandle = "Device_Handle";
 
@@ -24,6 +24,7 @@ bridge::DeviceSystemBridge::DeviceSystemBridge(shared_ptr<IAdapter> const& adapt
   : m_alljoynInitialized(false)
   , m_adapter(adapter)
   , m_adapterSignalListener(new AdapterSignalListener(*this))
+  , m_configManager(*this, *adapter)
 {
 }
 
@@ -48,6 +49,7 @@ bridge::DeviceSystemBridge::Initialize()
       DSBLOG_WARN("Failed to initialize AllJoyn: 0x%x", st);
       goto Leave;
     }
+    m_alljoynInitialized = true;
   }
 
   st = InitializeInternal();
@@ -68,7 +70,7 @@ bridge::DeviceSystemBridge::InitializeInternal()
 {
   QStatus st = ER_OK;
 
-  // st = m_configManager.Initialize(this);
+  st = m_configManager.Initialize();
   if (st != ER_OK)
     goto Leave;
 
@@ -76,6 +78,12 @@ bridge::DeviceSystemBridge::InitializeInternal()
   if (st != ER_OK)
   {
     DSBLOG_WARN("Failed to intialize adapter: 0x%x", st);
+    goto Leave;
+  }
+
+  st = m_configManager.ConnectToAllJoyn();
+  if (st != ER_OK)
+  {
     goto Leave;
   }
 
@@ -145,16 +153,29 @@ bridge::DeviceSystemBridge::InitializeDevices(bool update)
   if (ret != 0)
     goto Leave;
 
+  if (request)
+  {
+    ret = request->Wait(kWaitTimeoutForAdapterOperation);
+    if (ret != 0)
+    {
+      goto Leave;
+    }
+  }
+
   typedef AdapterDeviceVector::iterator iterator;
   for (iterator begin = deviceList.begin(), end = deviceList.end(); begin != end; ++begin)
   {
-    // TODO: get configuration for device
-
+    // TODO: get configuration for device, only expose visible devices
     if (update)
-      UpdateDevice(*begin, true);
+      ret = UpdateDevice(*begin, true);
+    else
+      ret = CreateDevice(*begin);
 
-    // unfinished
+    if (ret != 0)
+      DSBLOG_WARN("Failed to %s device: %d", update ? "update" : "create", ret);
   }
+
+  // TODO: Save bridge configuration to XML
 
 Leave:
   return ret == 0 ? ER_OK : ER_FAIL;
@@ -167,12 +188,14 @@ bridge::DeviceSystemBridge::OnAdapterSignal(IAdapterSignal const& signal, void*)
   shared_ptr<IAdapterDevice> adapterDevice;
 
   std::string const name = signal.GetName();
-  if (name == kDeviceArrivalSignal || name ==kDeviceArriaveDeviceHandle)
+  if (name == kDeviceArrivalSignal || name == kDeviceRemovalSignal)
   {
     AdapterValueVector params = signal.GetParams();
     for (AdapterValueVector::const_iterator itr = params.begin(); itr != params.end(); ++itr)
     {
-      if ((*itr)->GetName() == kDeviceArriaveDeviceHandle)
+      const shared_ptr<IAdapterValue>& param = (*itr);
+      const std::string& paramName = param->GetName();
+      if (paramName == kDeviceArrivalDeviceHandle || paramName == kDeviceRemovalDeviceHandle)
       {
         // TODO: figure out where this signal is generated and figure out how we're 
         // going to put an arbitrary pointer inside.
@@ -187,6 +210,7 @@ bridge::DeviceSystemBridge::OnAdapterSignal(IAdapterSignal const& signal, void*)
 
   if (name == kDeviceArrivalSignal)
   {
+    CreateDevice(adapterDevice);
   }
   else if (name == kDeviceRemovalSignal)
   {
@@ -242,7 +266,7 @@ bridge::DeviceSystemBridge::RegisterAdapterSignalHandlers(bool isRegister)
 QStatus
 bridge::DeviceSystemBridge::ShutdownInternal()
 {
-  // m_configManager.Shutdown();
+  m_configManager.Shutdown();
 
   if (m_adapter)
   {
