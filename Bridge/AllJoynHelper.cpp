@@ -16,7 +16,7 @@ bridge::AllJoynHelper::SetMsgArg(IAdapterValue const& adapterValue, ajn::MsgArg&
 
   switch (val.GetType())
   {
-    case common::Variant::DataType::Invalid:
+    case common::Variant::DataType::Null:
     break;
 
     case common::Variant::DataType::Boolean:
@@ -99,7 +99,10 @@ bridge::AllJoynHelper::SetMsgArg(IAdapterValue const& adapterValue, ajn::MsgArg&
     break;
 
     case common::Variant::DataType::BooleanArray:
-      st = SetMsgArg<bool>(m, sig.c_str(), val.ToBooleanArray());
+      /* Using vector<uint8_t> instead of vector<bool>, since vector<bool> is a
+       * bitfield and we can't access the underlying array easily.
+       * http://en.cppreference.com/w/cpp/container/vector_bool */
+      st = SetMsgArg<uint8_t>(m, sig.c_str(), val.ToUInt8Array());
     break;
 
     case common::Variant::DataType::UInt8Array:
@@ -141,13 +144,41 @@ bridge::AllJoynHelper::SetMsgArg(IAdapterValue const& adapterValue, ajn::MsgArg&
 
   return st;
 }
+
+template<>
+QStatus bridge::AllJoynHelper::SetMsgArg(ajn::MsgArg& msg, std::string const& sig, std::vector<std::string> const& arr)
+{
+  QStatus st = ER_OK;
+
+  if (!arr.empty())
+  {
+    int n = static_cast<int>(arr.size());
+
+    typedef char const* value_type;
+    value_type* p = new value_type[n];
+
+    for (int i = 0; i < n; ++i)
+      p[i] = arr[i].c_str();
+
+    st = msg.Set(sig.c_str(), n, p);
+    msg.Stabilize();
+  }
+  else
+  {
+    st = msg.Set(sig.c_str(), 1, "");
+    msg.Stabilize();
+  }
+
+  return st;
+}
    
 QStatus
-bridge::AllJoynHelper::SetMsgArgFromAdapterObject(IAdapterValue const& adapterValue, ajn::MsgArg& msg, DeviceMain* deviceMain)
+bridge::AllJoynHelper::SetMsgArgFromAdapterObject(IAdapterValue const& adapterValue, ajn::MsgArg&, DeviceMain*)
 {
   // TODO:
   QStatus st = ER_OK;
   common::Variant const& val = adapterValue.GetData();
+  QCC_UNUSED(val);
   // std::string path = deviceMain->GetBusObjectPath(adapterValue);
 
   return st;
@@ -187,7 +218,7 @@ bridge::AllJoynHelper::GetAdapterValue(IAdapterValue& adapterValue, ajn::MsgArg 
 }
 
 QStatus
-bridge::AllJoynHelper::GetAdapterObject(IAdapterValue& adapterValue, ajn::MsgArg const& msg, DeviceMain *deviceMain)
+bridge::AllJoynHelper::GetAdapterObject(IAdapterValue&, ajn::MsgArg const&, DeviceMain*)
 {
   return ER_NOT_IMPLEMENTED;
 }
@@ -291,12 +322,11 @@ bridge::AllJoynHelper::EncodeStringForInterfaceName(std::string const& s, std::s
   t = TrimChar(t, '.');
 }
 
-void
-bridge::AllJoynHelper::EncodeStringForServiceName(std::string const& s, std::string &t)
+std::string
+bridge::AllJoynHelper::EncodeStringForServiceName(std::string const& s)
 {
+  std::string t;
   std::string temp;
-
-  t.clear();
 
   for (char ch : s)
   {
@@ -310,14 +340,14 @@ bridge::AllJoynHelper::EncodeStringForServiceName(std::string const& s, std::str
       t += '_';
     t += temp;
   }
+  return t;
 }
 
-void
-bridge::AllJoynHelper::EncodeStringForRootServiceName(std::string const& s, std::string &t)
+std::string
+bridge::AllJoynHelper::EncodeStringForRootServiceName(std::string const& s)
 {
+  std::string t;
   char curr = '\0';
-
-  t.clear();
 
   for (char ch : s)
   {
@@ -336,18 +366,19 @@ bridge::AllJoynHelper::EncodeStringForRootServiceName(std::string const& s, std:
   }
 
   t = TrimChar(t, '.');
+  return t;
 }
 
-void
-bridge::AllJoynHelper::EncodeStringForAppName(std::string const& s, std::string &t)
+std::string
+bridge::AllJoynHelper::EncodeStringForAppName(std::string const& s)
 {
-  t.clear();
-
+  std::string t;
   for (char ch : s)
   {
     if (std::isalnum(ch))
       t += ch;
   }
+  return t;
 }
 
 std::string

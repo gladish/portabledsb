@@ -33,9 +33,9 @@ namespace bridge
     static void EncodeBusObjectName(std::string const& s, std::string &builtName);
     static void EncodePropertyOrMethodOrSignalName(std::string const& s, std::string &builtName);
     static void EncodeStringForInterfaceName(std::string const& s, std::string& encoded);
-    static void EncodeStringForServiceName(std::string const& s, std::string &encoded);
-    static void EncodeStringForRootServiceName(std::string const& s, std::string &encoded);
-    static void EncodeStringForAppName(std::string const& s, std::string &encodeString);
+    static std::string EncodeStringForServiceName(std::string const&);
+    static std::string EncodeStringForRootServiceName(std::string const&);
+    static std::string EncodeStringForAppName(std::string const&);
     static std::string TrimChar(std::string const& s, char c);
   };
 
@@ -46,7 +46,7 @@ namespace bridge
 
     if (!arr.empty())
     {
-      st = msg.Set(sig.c_str(), arr.size(), &arr[0]);
+      st = msg.Set(sig.c_str(), arr.size(), arr.data());
       msg.Stabilize();
     }
     else
@@ -61,31 +61,7 @@ namespace bridge
   }
 
   template<>
-  QStatus AllJoynHelper::SetMsgArg(ajn::MsgArg& msg, std::string const& sig, std::vector<std::string> const& arr)
-  {
-    QStatus st = ER_OK;
-
-    if (!arr.empty())
-    {
-      int n = static_cast<int>(arr.size());
-
-      typedef char const* value_type;
-      value_type* p = new value_type[n];
-
-      for (int i = 0; i < n; ++i)
-        p[i] = arr[i].c_str();
-        
-      st = msg.Set(sig.c_str(), n, p);
-      msg.Stabilize();
-    }
-    else
-    {
-      st = msg.Set(sig.c_str(), 1, "");
-      msg.Stabilize();
-    }
-
-    return st;
-  }
+  QStatus AllJoynHelper::SetMsgArg(ajn::MsgArg& msg, std::string const& sig, std::vector<std::string> const& arr);
  
 }
 

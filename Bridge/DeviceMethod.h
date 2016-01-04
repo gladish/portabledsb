@@ -14,10 +14,10 @@ namespace bridge
   class DeviceMethod
   {
   public:
-    DeviceMethod();
+    DeviceMethod(DeviceMain&);
     virtual ~DeviceMethod();
 
-    QStatus Initialize(shared_ptr<DeviceMain> const& parent, shared_ptr<IAdapterMethod> const& adapterMethod);
+    QStatus Initialize(shared_ptr<IAdapterMethod> const& adapterMethod);
     uint32_t InvokeMethod(ajn::Message const& msg, ajn::MsgArg* outArgs, size_t numOutArgs);
 
     inline std::string const& GetName() const
@@ -28,11 +28,11 @@ namespace bridge
     QStatus BuildSignature(AdapterValueVector const& valueList, std::string& sig, std::string& parameterNames);
 
   private:
+    DeviceMain&             m_parent;
     std::string             m_exposedName;
     std::string             m_inSignature;
     std::string             m_outSignature;
     std::string             m_parameterNames;
-    shared_ptr<DeviceMain>  m_parent;
   };
 }
 

@@ -99,7 +99,7 @@ AllJoynAbout::GetDeviceId(std::string& deviceId)
 }
 
 QStatus
-AllJoynAbout::ReadDeviceId(std::string& s)
+AllJoynAbout::ReadDeviceId(std::string&)
 {
   // TODO read from config
   return ER_FAIL;

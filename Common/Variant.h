@@ -1,6 +1,7 @@
 #pragma once
 
 #include <stdint.h>
+#include <string.h>
 #include <stdlib.h>
 #include <string>
 #include <vector>
@@ -13,7 +14,7 @@ namespace common
   public:
    enum class DataType
    {
-      Invalid,
+      Null,
       Boolean,
       UInt8,
       Int16,
@@ -68,6 +69,14 @@ namespace common
 
     ~Variant();
 
+    bool operator < (Variant const& rhs) const;
+    // inline bool operator!=(const X& lhs, const X& rhs){return !operator==(lhs,rhs);}
+    // inline bool operator==(const X& lhs, const X& rhs){ /* do actual comparison */ }
+
+
+    bool IsArray() const;
+    int  Length() const;
+
     inline DataType GetType() const
       { return m_data.Type; }
 
@@ -109,10 +118,24 @@ namespace common
     std::vector<double>       ToDoubleArray(bool* ok = NULL) const;
     std::vector<std::string>  ToStringArray(bool* ok = NULL) const;
 
-    std::string ToString(bool* ok = NULL) const;
+    std::string ToString() const;
+
+    bool CanConvert(DataType t) const;
 
   private:
-    bool CanConvert(DataType t) const;
+    template<class T>
+    static void* allocArray(int n)
+    {
+      T* p = new T[n];
+      return reinterpret_cast<void *>(p);
+    }
+
+    template<class T>
+    static void freeArray(void* p)
+    {
+      T* arr = reinterpret_cast<T *>(p);
+      delete [] arr;
+    }
 
     template<class T>
     T Convert(DataType t) const
@@ -140,12 +163,10 @@ namespace common
     {
       if (CanConvert(t))
       {
-        if (*ok)
-          *ok = true;
+        if (ok) *ok = true;
         return Convert<T>(t);
       }
-      if (ok)
-        *ok = false;
+      if (ok) *ok = false;
       return T();
     }
 
@@ -198,10 +219,13 @@ namespace common
     template<class T>
     void AssignFromArray(Data& to, Data const& from)
     {
-      if (to.Item.v_arr)
-        free(to.Item.v_arr);
+      if (IsArray() && to.Item.v_arr)
+        freeArray<T>(to.Item.v_arr);
 
-      to.Item.v_arr = malloc(sizeof(T) * from.Size);
+      memset(&to.Item, 0, sizeof(to.Item));
+      to.Size = from.Size;
+      to.Type = from.Type;
+      to.Item.v_arr = allocArray<T>(from.Size);
 
       T* toVect = reinterpret_cast<T *>(to.Item.v_arr);
       T* fromVect = reinterpret_cast<T *>(from.Item.v_arr);
@@ -216,10 +240,11 @@ namespace common
       d.Size = static_cast<int>(v.size());
       if (d.Size > 0)
       {
-        if (d.Item.v_arr)
-          free(d.Item.v_arr);
+        if (IsArray() && d.Item.v_arr)
+          freeArray<T>(d.Item.v_arr);
 
-        d.Item.v_arr = malloc(sizeof(T) * d.Size);
+        memset(&d.Item, 0, sizeof(d.Item));
+        d.Item.v_arr = allocArray<T>(d.Size);
 
         T* arr = reinterpret_cast<T *>(d.Item.v_arr);
         for (int i = 0; i < d.Size; ++i)

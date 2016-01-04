@@ -9,11 +9,59 @@
 #include <libxml/tree.h>
 #include <libxml/parser.h>
 #include <libxml/xpath.h>
+#include <libxml/xmlerror.h>
 #include <libxml/xmlsave.h>
 
 namespace
 {
   DSB_DECLARE_LOGNAME(BridgeConfig);
+
+  void libXmlGenericErrorFunc(void* /*ctx*/, xmlErrorPtr error)
+  {
+    if (!error)
+      return;
+
+    common::Logger::Level level = common::Logger::DSB_LOGLEVEL_INFO;
+    switch (error->level)
+    {
+      case XML_ERR_NONE:
+        level = common::Logger::DSB_LOGLEVEL_DEBUG;
+        break;
+      case XML_ERR_WARNING:
+        level = common::Logger::DSB_LOGLEVEL_WARN;
+        break;
+      case XML_ERR_ERROR:
+        level = common::Logger::DSB_LOGLEVEL_ERROR;
+        break;
+      case XML_ERR_FATAL:
+        level = common::Logger::DSB_LOGLEVEL_FATAL;
+        break;
+    }
+
+    // remove newline. I hate blank lines in logfiles.
+    if (error->message)
+    {
+      char* p = strrchr(error->message, '\n');
+      if (p)
+        *p = '\0';
+    }
+
+    char const* msg = error->message;
+    if (!msg)
+      msg = "<unknown error>";
+
+    common::Logger::Write("libxml", level, error->file, error->line, "%s", msg);
+  }
+
+  void installXmlLogger()
+  {
+    static bool libXmlLoggerInstalled = false;
+    if (!libXmlLoggerInstalled)
+    {
+      xmlSetStructuredErrorFunc(NULL, &libXmlGenericErrorFunc);
+      libXmlLoggerInstalled = true;
+    }
+  }
 
   inline xmlChar const* toXmlChar(char const* s)
   {
@@ -110,6 +158,7 @@ namespace
 bridge::BridgeConfig::BridgeConfig()
   : m_doc(NULL)
 {
+  installXmlLogger();
 }
 
 bridge::BridgeConfig::~BridgeConfig()
@@ -124,7 +173,7 @@ bridge::BridgeConfig::FromFile(std::string const& fileName)
   QStatus st = ER_OK;
 
   m_fileName = fileName;
-
+  installXmlLogger();
   xmlInitParser();
 
   xmlDocPtr doc = xmlParseFile(m_fileName.c_str());

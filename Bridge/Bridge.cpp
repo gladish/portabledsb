@@ -1,7 +1,7 @@
 #include "Bridge.h"
 #include "Common/Log.h"
 #include "Bridge/BridgeDevice.h"
-
+#include <qcc/Debug.h>
 #include <alljoyn/Init.h>
 
 namespace
@@ -18,6 +18,39 @@ namespace
   {
     return dev.get();
   }
+
+  void alljoynLogger(DbgMsgType type, char const* module, char const* msg, void* /*ctx*/)
+  {
+    common::Logger::Level level = common::Logger::DSB_LOGLEVEL_INFO;
+    switch (type)
+    {
+      case DBG_LOCAL_ERROR:
+      case DBG_REMOTE_ERROR:
+        level = common::Logger::DSB_LOGLEVEL_ERROR;
+        break;
+      case DBG_HIGH_LEVEL:
+        level = common::Logger::DSB_LOGLEVEL_WARN;
+        break;
+      case DBG_GEN_MESSAGE:
+        level = common::Logger::DSB_LOGLEVEL_INFO;
+        break;
+      case DBG_API_TRACE:
+      case DBG_REMOTE_DATA:
+      case DBG_LOCAL_DATA:
+        level = common::Logger::DSB_LOGLEVEL_DEBUG;
+    }
+    common::Logger::Write("alljoyn", level, NULL, 0, "[%s] %s", module, msg);
+  }
+
+  void RegisterAllJoynLogger()
+  {
+    static bool alljoynLoggerRegistered = false;
+    if (!alljoynLoggerRegistered)
+    {
+      alljoynLoggerRegistered = true;
+      QCC_RegisterOutputCallback(alljoynLogger, NULL);
+    }
+  }
 }
 
 bridge::DeviceSystemBridge::DeviceSystemBridge(shared_ptr<IAdapter> const& adapter)
@@ -26,6 +59,8 @@ bridge::DeviceSystemBridge::DeviceSystemBridge(shared_ptr<IAdapter> const& adapt
   , m_adapterSignalListener(new AdapterSignalListener(*this))
   , m_configManager(*this, *adapter)
 {
+  // TODO: bug in alljoyn prevents registering logger.
+  // RegisterAllJoynLogger();
 }
 
 bridge::DeviceSystemBridge::~DeviceSystemBridge()
@@ -43,12 +78,14 @@ bridge::DeviceSystemBridge::Initialize()
   DSBLOG_DEBUG(__FUNCTION__);
   if (!m_alljoynInitialized)
   {
+    DSBLOG_INFO("initialize AllJoyn");
     st = AllJoynInit();
     if (st != ER_OK)
     {
-      DSBLOG_WARN("Failed to initialize AllJoyn: 0x%x", st);
+      DSBLOG_WARN("initialize AllJoyn failed: %s", QCC_StatusText(st));
       goto Leave;
     }
+
     m_alljoynInitialized = true;
   }
 
@@ -70,34 +107,46 @@ bridge::DeviceSystemBridge::InitializeInternal()
 {
   QStatus st = ER_OK;
 
+  DSBLOG_INFO("initialize configuration manager");
   st = m_configManager.Initialize();
-  if (st != ER_OK)
-    goto Leave;
 
+  if (st != ER_OK)
+  {
+    DSBLOG_WARN("initialize configuration manager failed: %s", QCC_StatusText(st));
+    goto Leave;
+  }
+
+  DSBLOG_INFO("initialize adapter");
   st = InitializeAdapter();
+
   if (st != ER_OK)
   {
-    DSBLOG_WARN("Failed to intialize adapter: 0x%x", st);
+    DSBLOG_WARN("initialize adapter failed: %s", QCC_StatusText(st));
     goto Leave;
   }
 
+  DSBLOG_INFO("connect to AllJoyn router");
   st = m_configManager.ConnectToAllJoyn();
+
   if (st != ER_OK)
   {
+    DSBLOG_INFO("connect to AllJoyn router failed: %s", QCC_StatusText(st));
     goto Leave;
   }
 
+  DSBLOG_INFO("initialize devices");
   st = InitializeDevices();
   if (st != ER_OK)
   {
-    DSBLOG_WARN("Failed to initialize devices: 0x%x", st);
+    DSBLOG_WARN("initialize devices failed: %s", QCC_StatusText(st));
     goto Leave;
   }
 
+  DSBLOG_INFO("registering signal handlers");
   st = RegisterAdapterSignalHandlers(true);
   if (st != ER_OK)
   {
-    DSBLOG_WARN("Failed to register adapter signal handlers: 0x%x", st);
+    DSBLOG_WARN("register signal handlers failed: %s", QCC_StatusText(st));
     goto Leave;
   }
 
@@ -113,7 +162,7 @@ bridge::DeviceSystemBridge::Shutdown()
   st = ShutdownInternal();
   if (st != ER_OK)
   {
-    DSBLOG_WARN("failed to shutdown internal: 0x%x", st);
+    DSBLOG_WARN("failed to shutdown internal: %s", QCC_StatusText(st));
     return st;
   }
 
@@ -234,7 +283,7 @@ bridge::DeviceSystemBridge::RegisterAdapterSignalHandlers(bool isRegister)
         int ret = m_adapter->RegisterSignalListener((*itr)->GetName(), m_adapterSignalListener, NULL, handle);
         if (ret != 0)
         {
-          DSBLOG_WARN("failed to register signal listener on adapter: 0x%x", st);
+          DSBLOG_WARN("failed to register signal listener on adapter: %s", QCC_StatusText(st));
           if (st == ER_OK)
             ret = st;
         }
@@ -253,7 +302,7 @@ bridge::DeviceSystemBridge::RegisterAdapterSignalHandlers(bool isRegister)
       int ret = m_adapter->UnregisterSignalListener(*begin);
       if (ret != 0)
       {
-        DSBLOG_WARN("failed to unregister signal listener on adapter: 0x%x", st);
+        DSBLOG_WARN("failed to unregister signal listener on adapter: %s", QCC_StatusText(st));
         if (st == ER_OK)
           st = ER_FAIL;
       }
@@ -296,7 +345,7 @@ bridge::DeviceSystemBridge::UpdateDevice(shared_ptr<IAdapterDevice> const& dev, 
   {
     m_deviceList.erase(itr);
     if ((st = itr->second->Shutdown()) != ER_OK)
-      DSBLOG_WARN("failed to shutdown BridgeDevice: 0x%x", st);
+      DSBLOG_WARN("failed to shutdown BridgeDevice: %s", QCC_StatusText(st));
   }
 
   return st;
@@ -305,9 +354,12 @@ bridge::DeviceSystemBridge::UpdateDevice(shared_ptr<IAdapterDevice> const& dev, 
 QStatus
 bridge::DeviceSystemBridge::CreateDevice(shared_ptr<IAdapterDevice> const& dev)
 {
-  shared_ptr<BridgeDevice> newDevice(new BridgeDevice());
+  if (!dev.get())
+    return ER_BAD_ARG_1;
+
+  shared_ptr<BridgeDevice> newDevice(new BridgeDevice(dev, m_adapter));
   
-  QStatus st = newDevice->Initialize(dev);
+  QStatus st = newDevice->Initialize();
   if (st == ER_OK)
     m_deviceList.insert(std::make_pair(GetKey(dev), newDevice));
 

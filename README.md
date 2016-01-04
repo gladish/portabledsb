@@ -1,6 +1,17 @@
 # portabledsb
 A portable c++ version of the AllJoyn DSB
 
+Building:
+
+Right now we're only building on OSX/Linux.
+
+1. export ALLJOYN_INSTALL_DIR=[path to your build of alljouyn core]
+2. make [options]
+
+[options]
+* DEBUG -- debug build (-g) otherwise -O2 is used
+* V     -- verbose output (skip if you want cleaner output)
+
 
 The AllSeen Alliance has a Device System Bridge (DSB), which allows non-allseen devices to
 communicate on an AllJoyn bus. There's a good document describing the software here:

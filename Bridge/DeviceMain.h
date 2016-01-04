@@ -12,37 +12,34 @@ namespace bridge
   class DeviceMethod;
   class DeviceSignal;
 
-  class DeviceMain
+  class DeviceMain : private ajn::BusObject
   {
-    DeviceMain();
+    DeviceMain(BridgeDevice& parent);
     virtual ~DeviceMain();
 
-    QStatus Initialize(shared_ptr<BridgeDevice> const& parent);
+    QStatus Initialize();
 
     bool IsMethodNameUnique(std::string const& name);
     bool IsSignalNameUnique(std::string const& name);
     void HandleSignal(IAdapterSignal const& adapterSignal);
 
-    inline shared_ptr<ajn::BusObject> GetBusObject() const
-      { return m_busObject; }
-
     inline int GetIndexForMethod()
       { return m_indexForMethod++; }
 
-    inline std::string GetBusObjectPath(IAdapterProperty const& prop)
+    inline std::string GetBusObjectPath(IAdapterProperty const&)
       { return std::string(); }
 
   private:
     void Shutdown();
+    QStatus CreateMethodsAndSignals();
+    void AJMethod(const ajn::InterfaceDescription::Member*, ajn::Message&);
 
   private:
+    BridgeDevice&                               m_parent;
     int                                         m_indexForSignal;
     int                                         m_indexForMethod;
-    shared_ptr<ajn::BusObject>                  m_busObject;
-    std::unique_ptr<ajn::InterfaceDescription>  m_interfaceDescrtipion;
-    std::string                                 m_busObjectPath;
+    std::unique_ptr<ajn::InterfaceDescription>  m_interfaceDescription;
     std::string                                 m_interfaceName;
-    std::shared_ptr<BridgeDevice>               m_parent;
     std::map<std::string, DeviceMethod* >       m_deviceMethods;
     std::map<std::string, DeviceSignal* >       m_deviceSignals;
     bool                                        m_registeredOnAllJoyn;

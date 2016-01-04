@@ -1,12 +1,15 @@
-#include "Adapters/MockAdapter/MockAdapter.h"
-#include "Adapters/MockAdapter/MockDevices.h"
-#include "Adapters/MockAdapter/MockAdapterDevice.h"
+#include "MockAdapter.h"
+
+#include "MockDevices.h"
+#include "MockAdapterDevice.h"
+#include "Common/Log.h"
 
 #include <vector>
 #include <algorithm>
 
 namespace
 {
+  DSB_DECLARE_LOGNAME(MockAdapter);
   bridge::IAdapter::RegistrationHandle nextHandle = 0;
   bridge::IAdapter::RegistrationHandle GetNextRegistrationHandle()
   {
@@ -26,6 +29,7 @@ adapters::mock::MockAdapter::MockAdapter()
 
 adapters::mock::MockAdapter::~MockAdapter()
 {
+  Shutdown();
 }
 
 std::string
@@ -82,7 +86,18 @@ adapters::mock::MockAdapter::Initialize()
 int32_t
 adapters::mock::MockAdapter::Shutdown()
 {
-  return ER_NOT_IMPLEMENTED;
+  m_vendor.clear();
+  m_adapterName.clear();
+  m_version.clear();
+  m_exposedAdapterPrefix.clear();
+  m_exposedApplicationName.clear();
+  m_exposedApplicationGuid.clear();
+
+  m_devices.clear();
+  m_signals.clear();
+
+  m_signalListeners.clear();
+  return ER_OK;
 }
 
 

@@ -52,7 +52,7 @@ int main(int /*argc*/, char* /*argv*/ [])
   st = bridge->Initialize();
   if (st != ER_OK)
   {
-    DSBLOG_ERROR("failed to initialize bridge: 0x%x", st);
+    DSBLOG_ERROR("failed to initialize bridge: %s", QCC_StatusText(st));
     return 1;
   }
 
