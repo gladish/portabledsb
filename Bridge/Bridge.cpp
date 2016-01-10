@@ -51,6 +51,20 @@ namespace
       QCC_RegisterOutputCallback(alljoynLogger, NULL);
     }
   }
+
+  shared_ptr<bridge::DeviceSystemBridge> gBridge;
+}
+
+shared_ptr<bridge::DeviceSystemBridge>
+bridge::DeviceSystemBridge::GetInstance()
+{
+  return gBridge;
+}
+
+void
+bridge::DeviceSystemBridge::InitializeSingleton(shared_ptr<IAdapter> const& adapter)
+{
+  gBridge.reset(new DeviceSystemBridge(adapter));
 }
 
 bridge::DeviceSystemBridge::DeviceSystemBridge(shared_ptr<IAdapter> const& adapter)

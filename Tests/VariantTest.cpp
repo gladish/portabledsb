@@ -1,6 +1,6 @@
 
 #include <gtest/gtest.h>
-#include <Variant.h>
+#include <Common/Variant.h>
 
 template<class T>
 std::vector<T> makeVect(int n, int start = 0)

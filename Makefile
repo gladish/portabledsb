@@ -12,11 +12,16 @@ SRCS=DeviceProviders/AllJoynProvider.cpp \
      Bridge/DeviceSignal.cpp \
      Common/Log.cpp \
      Common/Variant.cpp \
+     Common/Guid.cpp \
      Adapters/MockAdapter/MockAdapter.cpp \
      Adapters/MockAdapter/MockDevices.cpp \
      Adapters/MockAdapter/MockAdapterDevice.cpp \
      Adapters/ZigBeeAdapter/ZigBeeAdapter.cpp \
      main.cpp
+
+TEST_SRCS = Tests/VariantTest.cpp
+TEST_OBJS = $(patsubst %.cpp, %.o, $(TEST_SRCS))
+TESTS = $(patsubst %.cpp, %, $(TEST_SRCS))
 
 LIBXML_INC?=/usr/include/libxml2
 
@@ -26,7 +31,15 @@ CXXFLAGS=-D QCC_OS_GROUP_POSIX -Wall -Wextra -Wno-missing-field-initializers -Wn
 LDFLAGS=-L $(ALLJOYN_INSTALL_DIR)/lib -lalljoyn -lcrypto -lxml2
 DEV_PROVIDER_OBJS=$(patsubst %.cpp, %.o, $(SRCS))
 OBJS=$(DEV_PROVIDER_OBJS)
-DEPS = $(OBJS:%.o=%.d)
+DEPS = $(OBJS:%.o=%.d) $(TEST_OBJS:%.o=%.d)
+
+GTEST_DIR?=/usr/src/gtest
+ifneq ("$(wildcard $(GTEST_DIR)/libgtest.a)","")
+	GTEST_FLAGS = $(GTEST_DIR)/libgtest.a
+	CXXFLAGS += -I$(GTEST_DIR)/include
+else
+	GTEST_FLAGS = -lgtest
+endif
 
 UNAME_S = $(shell uname -s)
 ifeq ($(UNAME_S),Linux)
@@ -49,11 +62,21 @@ endif
 
 all: moc-adapter
 
+tests: $(TESTS)
+
+check: tests
+	@for test in $(TESTS) ; do \
+		$$test ; \
+	done
+
 clean:
-	$(RM) moc-adapter $(OBJS) $(DEPS)
+	$(RM) moc-adapter $(TESTS) $(OBJS) $(DEPS) $(TEST_OBJS)
 
 moc-adapter: $(OBJS)
 	$(LD_PRETTY) -o $@ $^ $(LDFLAGS)
+
+Tests/VariantTest: Tests/VariantTest.o Common/Variant.o
+	$(LD_PRETTY) -o $@ $^ $(LDFLAGS) $(GTEST_FLAGS)
 
 %.o: %.cpp
 	$(CXX_PRETTY) $(CXXFLAGS) -MMD -c -o $@ $<

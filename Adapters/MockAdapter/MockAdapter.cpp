@@ -22,7 +22,7 @@ adapters::mock::MockAdapter::MockAdapter()
   , m_adapterName("DSB Mock Adapter")
   , m_exposedAdapterPrefix("com." + m_vendor)
   , m_exposedApplicationName("DeviceSystemBridge")
-  , m_exposedApplicationGuid("C27BC425-0058-4829-8775-441B5D8740C0")
+  , m_exposedApplicationGuid(common::Guid::Parse("C27BC425-0058-4829-8775-441B5D8740C0"))
 {
   // TODO: get m_exposedApplicatioName and Prefix from config
 }
@@ -62,7 +62,7 @@ adapters::mock::MockAdapter::GetExposedApplicationName()
   return m_exposedApplicationName;
 }
 
-std::string
+common::Guid
 adapters::mock::MockAdapter::GetExposedApplicationGuid()
 {
   return m_exposedApplicationGuid;
@@ -91,7 +91,6 @@ adapters::mock::MockAdapter::Shutdown()
   m_version.clear();
   m_exposedAdapterPrefix.clear();
   m_exposedApplicationName.clear();
-  m_exposedApplicationGuid.clear();
 
   m_devices.clear();
   m_signals.clear();

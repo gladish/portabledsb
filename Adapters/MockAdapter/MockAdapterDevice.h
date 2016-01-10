@@ -75,6 +75,9 @@ namespace mock
     MockAdapterProperty(MockPropertyDescriptor const& desc, weak_ptr<MockAdapterDevice> const& parent);
 
     virtual std::string GetName();
+    virtual std::string GetInterfaceHint()
+      { return std::string(""); }
+
     virtual bridge::AdapterValueVector GetAttributes();
 
     shared_ptr<MockAdapterDevice> GetParent()
@@ -116,6 +119,7 @@ namespace mock
     virtual std::string GetFirmwareVersion();
     virtual std::string GetSerialNumber();
     virtual std::string GetDescription();
+    virtual shared_ptr<bridge::IAdapterIcon> GetIcon();
 
     virtual bridge::AdapterPropertyVector const& GetProperties() const;
     virtual bridge::AdapterMethodVector const& GetMethods() const;
@@ -150,6 +154,7 @@ namespace mock
     std::string                         m_firmwareVersion;
     std::string                         m_serialNumber;
     std::string                         m_description;
+    shared_ptr<bridge::IAdapterIcon>    m_icon;
     bridge::AdapterPropertyVector       m_properties;
     bridge::AdapterMethodVector         m_methods; 
     bridge::AdapterSignalVector         m_signalPrototypes;

@@ -10,6 +10,13 @@
 namespace
 {
   DSB_DECLARE_LOGNAME(Main);
+
+  inline shared_ptr<bridge::DeviceSystemBridge> DSB()
+  {
+    shared_ptr<bridge::DeviceSystemBridge> b = bridge::DeviceSystemBridge::GetInstance();
+    assert(b.get() != nullptr);
+    return b;
+  }
 }
 
 int main(int /*argc*/, char* /*argv*/ [])
@@ -46,17 +53,17 @@ int main(int /*argc*/, char* /*argv*/ [])
 
   QStatus st = ER_OK;
 
-  shared_ptr<bridge::DeviceSystemBridge> bridge(new bridge::DeviceSystemBridge(
-    shared_ptr<bridge::IAdapter>(new adapters::mock::MockAdapter())));
+  bridge::DeviceSystemBridge::InitializeSingleton(
+      shared_ptr<bridge::IAdapter>(new adapters::mock::MockAdapter()));
 
-  st = bridge->Initialize();
+  st = DSB()->Initialize();
   if (st != ER_OK)
   {
     DSBLOG_ERROR("failed to initialize bridge: %s", QCC_StatusText(st));
     return 1;
   }
 
-  shared_ptr<bridge::IAdapter> adapter = bridge->GetAdapter();
+  shared_ptr<bridge::IAdapter> adapter = DSB()->GetAdapter();
 
   bridge::AdapterDeviceVector deviceList;
   shared_ptr<bridge::IAdapterIoRequest> req;

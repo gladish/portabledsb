@@ -1,20 +1,23 @@
 #ifndef __DEVICE_MAIN_H__
 #define __DEVICE_MAIN_H__
 
-#include "BridgeDevice.h"
 #include <map>
 
 #include <alljoyn/BusObject.h>
 #include <alljoyn/InterfaceDescription.h>
 
+#include "IAdapter.h"
+
 namespace bridge
 {
+  class BridgeDevice;
   class DeviceMethod;
   class DeviceSignal;
 
-  class DeviceMain : private ajn::BusObject
+  class DeviceMain : public ajn::BusObject
   {
-    DeviceMain(BridgeDevice& parent);
+  public:
+    DeviceMain(BridgeDevice& parent, const shared_ptr<IAdapterDevice>&);
     virtual ~DeviceMain();
 
     QStatus Initialize();
@@ -22,6 +25,8 @@ namespace bridge
     bool IsMethodNameUnique(std::string const& name);
     bool IsSignalNameUnique(std::string const& name);
     void HandleSignal(IAdapterSignal const& adapterSignal);
+
+    ajn::InterfaceDescription* GetInterfaceDescription();
 
     inline int GetIndexForMethod()
       { return m_indexForMethod++; }
@@ -38,7 +43,7 @@ namespace bridge
     BridgeDevice&                               m_parent;
     int                                         m_indexForSignal;
     int                                         m_indexForMethod;
-    std::unique_ptr<ajn::InterfaceDescription>  m_interfaceDescription;
+    ajn::InterfaceDescription*                  m_interfaceDescription;
     std::string                                 m_interfaceName;
     std::map<std::string, DeviceMethod* >       m_deviceMethods;
     std::map<std::string, DeviceSignal* >       m_deviceSignals;

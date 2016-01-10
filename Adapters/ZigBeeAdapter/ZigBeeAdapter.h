@@ -55,7 +55,7 @@ namespace zigbee
     virtual std::string GetVersion();
     virtual std::string GetExposedAdapterPrefix();
     virtual std::string GetExposedApplicationName();
-    virtual std::string GetExposedApplicationGuid();
+    virtual common::Guid GetExposedApplicationGuid();
     virtual bridge::AdapterSignalVector GetSignals();
 
     virtual int32_t Initialize();

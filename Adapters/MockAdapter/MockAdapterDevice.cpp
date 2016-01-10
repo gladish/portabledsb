@@ -182,6 +182,11 @@ std::string MockAdapterDevice::GetDescription()
   return m_description;
 }
 
+shared_ptr<bridge::IAdapterIcon> MockAdapterDevice::GetIcon()
+{
+  return m_icon;
+}
+
 bridge::AdapterPropertyVector const& MockAdapterDevice::GetProperties() const
 {
   return m_properties;

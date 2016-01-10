@@ -1,8 +1,10 @@
 #pragma once
 
 #include "Common/defines.h"
+#include "Common/Guid.h"
 #include "Common/Variant.h"
 
+#include <map>
 #include <string>
 #include <vector>
 
@@ -19,18 +21,42 @@ namespace bridge
   std::string const kDsbDeviceNotificationSignal = "DeviceNotificationSignal";
   std::string const kDsbSendMsgToDeviceMethod = "SendMessageToDeviceSynchronous";
 
-
   class IAdapterValue;
   class IAdapterProperty;
   class IAdapterMethod;
   class IAdapterSignal;
   class IAdapterDevice;
 
-  typedef std::vector< shared_ptr<IAdapterValue> > AdapterValueVector;
+  typedef std::vector< shared_ptr<IAdapterValue> >    AdapterValueVector;
   typedef std::vector< shared_ptr<IAdapterProperty> > AdapterPropertyVector;
-  typedef std::vector< shared_ptr<IAdapterMethod> > AdapterMethodVector;
-  typedef std::vector< shared_ptr<IAdapterSignal> > AdapterSignalVector;
-  typedef std::vector< shared_ptr<IAdapterDevice> > AdapterDeviceVector;
+  typedef std::vector< shared_ptr<IAdapterMethod> >   AdapterMethodVector;
+  typedef std::vector< shared_ptr<IAdapterSignal> >   AdapterSignalVector;
+  typedef std::vector< shared_ptr<IAdapterDevice> >   AdapterDeviceVector;
+  typedef std::map< std::string, std::string>         AnnotationMap;
+
+  enum class AccessType
+  {
+    Read,
+    Write,
+    ReadWrite
+  };
+
+  enum class SignalBehavior
+  {
+    Unspecified,
+    Never,
+    Always,
+    AlwaysWithNoValue
+  };
+
+  class IAdapterAttribute
+  {
+  public:
+    virtual shared_ptr<IAdapterValue> GetValue() = 0;
+    virtual AnnotationMap GetAnnotations() = 0;
+    virtual AccessType GetAccess() = 0;
+    virtual SignalBehavior GetChangeOfValueBehavior() = 0;
+  };
 
   class IAdapterValue
   {
@@ -46,6 +72,7 @@ namespace bridge
   public:
     virtual ~IAdapterProperty() { }
     virtual std::string GetName() = 0;
+    virtual std::string GetInterfaceHint() = 0;
     virtual AdapterValueVector GetAttributes() = 0;
   };
 
@@ -80,6 +107,14 @@ namespace bridge
     virtual void AdapterSignalHandler(IAdapterSignal const& signal, void* argp) = 0;
   };
 
+  class IAdapterIcon
+  {
+  public:
+    virtual std::vector<uint8_t> GetImage() = 0;
+    virtual std::string GetMimeType() = 0;
+    virtual std::string GetUrl() = 0;
+  };
+
   class IAdapterDevice
   {
   public:
@@ -91,6 +126,7 @@ namespace bridge
     virtual std::string GetFirmwareVersion() = 0;
     virtual std::string GetSerialNumber() = 0;
     virtual std::string GetDescription() = 0;
+    virtual shared_ptr<IAdapterIcon> GetIcon() = 0;
 
     virtual AdapterPropertyVector const& GetProperties() const = 0;
     virtual AdapterMethodVector const& GetMethods() const = 0;
@@ -125,8 +161,11 @@ namespace bridge
     virtual std::string GetVersion() = 0;
     virtual std::string GetExposedAdapterPrefix() = 0;
     virtual std::string GetExposedApplicationName() = 0;
-    virtual std::string GetExposedApplicationGuid() = 0;
+    virtual common::Guid GetExposedApplicationGuid() = 0;
     virtual AdapterSignalVector GetSignals() = 0;
+
+    virtual int32_t SetConfiguration(std::vector<uint8_t> const& configData) = 0;
+    virtual int32_t GetConfiguration(std::vector<uint8_t>* configData) = 0;
 
     virtual int32_t Initialize() = 0;
     virtual int32_t Shutdown() = 0;
@@ -166,6 +205,63 @@ namespace bridge
       RegistrationHandle& handle) = 0;
 
     virtual int32_t UnregisterSignalListener(RegistrationHandle const& h) = 0;
+  };
+
+
+  // concrete implementations of some of the simple interfaces
+
+  class AdapterAttribute : public IAdapterAttribute
+  {
+  public:
+    AdapterAttribute(shared_ptr<IAdapterValue> const& value, AnnotationMap const& annotations,
+      AccessType accessType, SignalBehavior signalBehavior)
+        : m_adapterValue(value)
+        , m_annotationMap(annotations)
+        , m_accessType(accessType)
+        , m_signalBehavior(signalBehavior)
+    {
+      // empty
+    }
+
+  public:
+    virtual shared_ptr<IAdapterValue> GetValue()
+      { return m_adapterValue; }
+
+    virtual AnnotationMap GetAnnotations()
+      { return m_annotationMap; }
+
+    virtual AccessType GetAccess()
+      { return m_accessType; }
+
+    virtual SignalBehavior GetChangeOfValueBehavior()
+      { return m_signalBehavior; }
+
+  private:
+    shared_ptr<IAdapterValue> m_adapterValue;
+    AnnotationMap             m_annotationMap;
+    AccessType                m_accessType;
+    SignalBehavior            m_signalBehavior;
+  };
+
+  class AdapterValue : public IAdapterValue
+  {
+  public:
+    AdapterValue(std::string const& name, common::Variant const& data)
+      : m_name(name)
+      , m_data(data)
+    {
+      // empty
+    }
+
+    virtual std::string GetName()
+      { return m_name; }
+
+    virtual common::Variant const& GetData() const
+      { return m_data; }
+
+  private:
+    std::string       m_name;
+    common::Variant   m_data;
   };
 }
 

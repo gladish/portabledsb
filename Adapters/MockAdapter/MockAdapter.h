@@ -23,11 +23,17 @@ namespace mock
     virtual std::string GetVersion();
     virtual std::string GetExposedAdapterPrefix();
     virtual std::string GetExposedApplicationName();
-    virtual std::string GetExposedApplicationGuid();
+    virtual common::Guid GetExposedApplicationGuid();
     virtual bridge::AdapterSignalVector GetSignals();
 
     virtual int32_t Initialize();
     virtual int32_t Shutdown();
+
+    virtual int32_t GetConfiguration(std::vector<uint8_t>* /*configData*/)
+      { return 0; }
+
+    virtual int32_t SetConfiguration(std::vector<uint8_t> const& /*configData*/)
+      { return 0; }
 
     virtual int32_t EnumDevices(
       bridge::EnumDeviceOptions opts,
@@ -77,7 +83,7 @@ namespace mock
     std::string m_version;
     std::string m_exposedAdapterPrefix;
     std::string m_exposedApplicationName;
-    std::string m_exposedApplicationGuid;
+    common::Guid m_exposedApplicationGuid;
 
     std::vector< shared_ptr<MockAdapterDevice> > m_devices;
     std::vector< shared_ptr<MockAdapterSignal> > m_signals;

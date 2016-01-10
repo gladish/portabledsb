@@ -19,10 +19,8 @@ namespace bridge
   class DeviceSystemBridge : public enable_shared_from_this<DeviceSystemBridge>
   {
   public:
-    static DeviceSystemBridge& Instance();
-
-    // TODO: really should be scoped_ptr as onwership is transferred
-    DeviceSystemBridge(shared_ptr<IAdapter> const& adapter);
+    static shared_ptr<DeviceSystemBridge> GetInstance();
+    static void InitializeSingleton(shared_ptr<IAdapter> const& adapter);
 
     virtual ~DeviceSystemBridge();
 
@@ -41,6 +39,8 @@ namespace bridge
       { return m_deviceList; }
 
   private:
+    DeviceSystemBridge(shared_ptr<IAdapter> const& adapter);
+
     QStatus RegisterAdapterSignalHandlers(bool isRegister);
     QStatus InitializeAdapter();
     QStatus InitializeInternal();

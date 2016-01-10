@@ -1,42 +1,29 @@
 #pragma once
 
-#include <string>
 #include <uuid/uuid.h>
+#include <string>
 
 namespace common
 {
   class Guid
   {
   public:
-    static Guid Create()
-    {
-      uuid_t uuid;
-      uuid_generate_random(uuid);
-      
-      #ifdef __linux__
-      char s[37];
-      #else
-      uuid_string_t s;
-      #endif
+    static Guid const& Null();
 
-      uuid_unparse(uuid, s);
+    static Guid NewGuid();
+    static Guid Parse(char const* s);
 
-      return Guid(std::string(s));
-    }
+    std::string ToString() const;
 
-    static Guid FromString(char const* s)
-    {
-      return Guid(s);
-    }
-
-    std::string ToString() const
-      { return m_uuid; }
+    bool operator <  (Guid const& rhs) const;
+    bool operator == (Guid const& rhs) const;
+    bool operator != (Guid const& rhs) const;
 
   private:
-    Guid(std::string const& uuid) : m_uuid(uuid) { }
+    Guid();
+    Guid(uuid_t id);
 
   private:
-    std::string m_uuid;
+    uuid_t m_uuid;
   };
 }
-

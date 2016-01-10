@@ -20,8 +20,8 @@ namespace bridge
     QStatus Initialize(ajn::BusAttachment& bus);
     QStatus Shutdown();
     QStatus Announce();
-    QStatus AddObject(ajn::BusObject& obj, ajn::InterfaceDescription const* ifc);
-    QStatus RemoveObject(ajn::BusObject& obj, ajn::InterfaceDescription const* ifc);
+    QStatus AddObject(ajn::BusObject& obj, ajn::InterfaceDescription const& ifc);
+    QStatus RemoveObject(ajn::BusObject& obj, ajn::InterfaceDescription const& ifc);
 
     // TODO: are these really needed? 
     QStatus SetManufacturer(char const* s);

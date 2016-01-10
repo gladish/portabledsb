@@ -7,7 +7,7 @@ namespace
   std::string const kVersion("1.0");
   std::string const kExposedPrefix("com.allseen");
   std::string const kExposedAppName("The ZigBee Adapter");
-  std::string const kExposedGuid("B8D50823-9F64-4110-AA0C-3CB3D17B73F2");
+  common::Guid const kExposedGuid = common::Guid::Parse("B8D50823-9F64-4110-AA0C-3CB3D17B73F2");
 }
 
 adapter::zigbee::Adapter::Adapter()
@@ -48,7 +48,7 @@ adapter::zigbee::Adapter::GetExposedApplicationName()
   return kExposedAppName;
 }
 
-std::string
+common::Guid
 adapter::zigbee::Adapter::GetExposedApplicationGuid()
 {
   return kExposedGuid;
