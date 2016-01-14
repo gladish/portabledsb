@@ -1,13 +1,9 @@
 #pragma once
 
-#include "Common/defines.h"
 #include "Common/Guid.h"
+#include "Bridge/AllJoynHeaders.h"
 
-#include <alljoyn/AboutData.h>
-#include <alljoyn/AboutObj.h>
-#include <alljoyn/BusAttachment.h>
-#include <alljoyn/InterfaceDescription.h>
-#include <alljoyn/Status.h>
+#include <memory>
 
 namespace bridge
 {
@@ -40,9 +36,9 @@ namespace bridge
     QStatus ReadDeviceId(std::string& deviceId);
 
   private:
-    // unique_ptr
-    shared_ptr<ajn::AboutData>  m_aboutData;
-    shared_ptr<ajn::AboutObj>   m_aboutObj;
+    // scoped_ptr
+    std::shared_ptr<ajn::AboutData>  m_aboutData;
+    std::shared_ptr<ajn::AboutObj>   m_aboutObj;
     bool                        m_isAnnounced;
   };
 }

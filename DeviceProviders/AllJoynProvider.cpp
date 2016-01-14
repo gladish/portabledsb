@@ -13,7 +13,7 @@ namespace
   {
   public:
     IsSamePointer(T* p) : m_ptr(p) { }
-    bool operator()(shared_ptr<T> const& rhs)
+    bool operator()(std::shared_ptr<T> const& rhs)
       { return m_ptr == rhs.get(); }
   private:
     T* m_ptr; 
@@ -133,7 +133,7 @@ AllJoynProvider::Shutdown()
 void
 AllJoynProvider::ProcessAboutAnnouncementQueue()
 {
-  typedef std::map<std::string, shared_ptr<AllJoynService> > service_map_type;
+  typedef std::map<std::string, std::shared_ptr<AllJoynService> > service_map_type;
 
   WorkItem item;
 
@@ -162,7 +162,7 @@ AllJoynProvider::ProcessAboutAnnouncementQueue()
     }
     else
     {
-      shared_ptr<AllJoynService> service(AllJoynService::Create(shared_from_this(), item.ServiceName, item.Port));
+      std::shared_ptr<AllJoynService> service(AllJoynService::Create(shared_from_this(), item.ServiceName, item.Port));
       m_servicesMap[item.ServiceName] = service;
       m_servicesVector.push_back(service);
     }
@@ -171,7 +171,7 @@ AllJoynProvider::ProcessAboutAnnouncementQueue()
 }
 
 void
-AllJoynProvider::RemoveSession(shared_ptr<AllJoynService> const& service)
+AllJoynProvider::RemoveSession(std::shared_ptr<AllJoynService> const& service)
 {
   // TODO: Does this need to be on another thread? 
   service_vector_type::iterator itr;

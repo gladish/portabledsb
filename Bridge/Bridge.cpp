@@ -1,6 +1,8 @@
 #include "Bridge.h"
 #include "Common/Log.h"
 #include "Bridge/BridgeDevice.h"
+#include "Bridge/Log.h"
+
 #include <qcc/Debug.h>
 #include <alljoyn/Init.h>
 
@@ -14,30 +16,30 @@ namespace
   std::string const kDeviceRemovalSignal = "Device_Removal";
   std::string const kDeviceRemovalDeviceHandle = "Device_Handle";
 
-  inline bridge::BridgeDeviceList::key_type GetKey(shared_ptr<bridge::IAdapterDevice> const& dev)
+  inline bridge::BridgeDeviceList::key_type GetKey(std::shared_ptr<bridge::IAdapterDevice> const& dev)
   {
     return dev.get();
   }
 
   void alljoynLogger(DbgMsgType type, char const* module, char const* msg, void* /*ctx*/)
   {
-    common::Logger::Level level = common::Logger::DSB_LOGLEVEL_INFO;
+    common::LogLevel level = common::LogLevel::Info;
     switch (type)
     {
       case DBG_LOCAL_ERROR:
       case DBG_REMOTE_ERROR:
-        level = common::Logger::DSB_LOGLEVEL_ERROR;
+        level = common::LogLevel::Error;
         break;
       case DBG_HIGH_LEVEL:
-        level = common::Logger::DSB_LOGLEVEL_WARN;
+        level = common::LogLevel::Warn;
         break;
       case DBG_GEN_MESSAGE:
-        level = common::Logger::DSB_LOGLEVEL_INFO;
+        level = common::LogLevel::Info;
         break;
       case DBG_API_TRACE:
       case DBG_REMOTE_DATA:
       case DBG_LOCAL_DATA:
-        level = common::Logger::DSB_LOGLEVEL_DEBUG;
+        level = common::LogLevel::Debug;
     }
     common::Logger::Write("alljoyn", level, NULL, 0, "[%s] %s", module, msg);
   }
@@ -52,22 +54,22 @@ namespace
     }
   }
 
-  shared_ptr<bridge::DeviceSystemBridge> gBridge;
+  std::shared_ptr<bridge::DeviceSystemBridge> gBridge;
 }
 
-shared_ptr<bridge::DeviceSystemBridge>
+std::shared_ptr<bridge::DeviceSystemBridge>
 bridge::DeviceSystemBridge::GetInstance()
 {
   return gBridge;
 }
 
 void
-bridge::DeviceSystemBridge::InitializeSingleton(shared_ptr<IAdapter> const& adapter)
+bridge::DeviceSystemBridge::InitializeSingleton(std::shared_ptr<IAdapter> const& adapter)
 {
   gBridge.reset(new DeviceSystemBridge(adapter));
 }
 
-bridge::DeviceSystemBridge::DeviceSystemBridge(shared_ptr<IAdapter> const& adapter)
+bridge::DeviceSystemBridge::DeviceSystemBridge(std::shared_ptr<IAdapter> const& adapter)
   : m_alljoynInitialized(false)
   , m_adapter(adapter)
   , m_adapterSignalListener(new AdapterSignalListener(*this))
@@ -197,30 +199,42 @@ bridge::DeviceSystemBridge::InitializeAdapter()
     DSBLOG_ERROR("can't initialize null adapter");
     return ER_FAIL;
   }
-  int ret = m_adapter->Initialize();
+
+  std::shared_ptr<IAdapterLog> log(new AdapterLog(m_adapter->GetAdapterName()));
+  int ret = m_adapter->Initialize(log);
   return ret == 0 ? ER_OK : ER_FAIL;
 }
 
 QStatus
 bridge::DeviceSystemBridge::InitializeDevices(bool update)
 {
+  QStatus st = ER_OK;
+
   AdapterDeviceVector deviceList;
-  shared_ptr<IAdapterIoRequest> request;
+  std::shared_ptr<IAdapterIoRequest> request;
 
   EnumDeviceOptions opts = EnumDeviceOptions::CacheOnly;
   if (update)
     opts = EnumDeviceOptions::ForceRefresh;
 
-  int ret = m_adapter->EnumDevices(opts, deviceList, &request);
+  AdapterStatus adapterStatus  = m_adapter->EnumDevices(opts, deviceList, &request);
+  if (!IsOk(adapterStatus))
+  {
+    DSBLOG_WARN("failed to enumerate devices: %d", m_adapter->GetStatusText(adapterStatus).c_str());
 
-  if (ret != 0)
+    // TODO: we need some translation from AdapterStatus to QStatus
+    st = ER_FAIL;
     goto Leave;
+  }
 
   if (request)
   {
-    ret = request->Wait(kWaitTimeoutForAdapterOperation);
-    if (ret != 0)
+    adapterStatus = request->Wait(kWaitTimeoutForAdapterOperation);
+    if (!IsOk(adapterStatus))
     {
+      DSBLOG_WARN("failed to wait for async i/o request: %s", m_adapter->GetStatusText(adapterStatus).c_str());
+
+      st = ER_FAIL;
       goto Leave;
     }
   }
@@ -230,25 +244,25 @@ bridge::DeviceSystemBridge::InitializeDevices(bool update)
   {
     // TODO: get configuration for device, only expose visible devices
     if (update)
-      ret = UpdateDevice(*begin, true);
+      st = UpdateDevice(*begin, true);
     else
-      ret = CreateDevice(*begin);
+      st = CreateDevice(*begin);
 
-    if (ret != 0)
-      DSBLOG_WARN("Failed to %s device: %d", update ? "update" : "create", ret);
+    if (st != ER_OK)
+      DSBLOG_WARN("Failed to %s device: %s", update ? "update" : "create", QCC_StatusText(st));
   }
 
   // TODO: Save bridge configuration to XML
 
 Leave:
-  return ret == 0 ? ER_OK : ER_FAIL;
+  return st;
 }
 
 void
 bridge::DeviceSystemBridge::OnAdapterSignal(IAdapterSignal const& signal, void*)
 {
   // TODO
-  shared_ptr<IAdapterDevice> adapterDevice;
+  std::shared_ptr<IAdapterDevice> adapterDevice;
 
   std::string const name = signal.GetName();
   if (name == kDeviceArrivalSignal || name == kDeviceRemovalSignal)
@@ -256,7 +270,7 @@ bridge::DeviceSystemBridge::OnAdapterSignal(IAdapterSignal const& signal, void*)
     AdapterValueVector params = signal.GetParams();
     for (AdapterValueVector::const_iterator itr = params.begin(); itr != params.end(); ++itr)
     {
-      const shared_ptr<IAdapterValue>& param = (*itr);
+      const std::shared_ptr<IAdapterValue>& param = (*itr);
       const std::string& paramName = param->GetName();
       if (paramName == kDeviceArrivalDeviceHandle || paramName == kDeviceRemovalDeviceHandle)
       {
@@ -346,7 +360,7 @@ bridge::DeviceSystemBridge::ShutdownInternal()
 }
 
 QStatus
-bridge::DeviceSystemBridge::UpdateDevice(shared_ptr<IAdapterDevice> const& dev, bool exposedOnAllJoynBus)
+bridge::DeviceSystemBridge::UpdateDevice(std::shared_ptr<IAdapterDevice> const& dev, bool exposedOnAllJoynBus)
 {
   QStatus st = ER_OK;
 
@@ -366,12 +380,12 @@ bridge::DeviceSystemBridge::UpdateDevice(shared_ptr<IAdapterDevice> const& dev, 
 }
 
 QStatus
-bridge::DeviceSystemBridge::CreateDevice(shared_ptr<IAdapterDevice> const& dev)
+bridge::DeviceSystemBridge::CreateDevice(std::shared_ptr<IAdapterDevice> const& dev)
 {
   if (!dev.get())
     return ER_BAD_ARG_1;
 
-  shared_ptr<BridgeDevice> newDevice(new BridgeDevice(dev, m_adapter));
+  std::shared_ptr<BridgeDevice> newDevice(new BridgeDevice(dev, m_adapter));
   
   QStatus st = newDevice->Initialize();
   if (st == ER_OK)

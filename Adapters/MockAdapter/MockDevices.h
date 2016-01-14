@@ -3,7 +3,17 @@
 #include <stdint.h>
 #include <string>
 #include <vector>
+
+//
+// TODO
+// Adapters should be able to be built without alljoyn?
+// This is mock, but let's remove alljoyn deps to use
+// the MockAdapter as a confirmation that it's possible
+//
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wignored-qualifiers"
 #include <alljoyn/Message.h>
+#pragma GCC diagnostic pop
 
 namespace adapters
 {

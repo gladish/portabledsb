@@ -11,7 +11,7 @@ namespace bridge
   class BridgeDevice : private ajn::SessionPortListener, private ajn::BusListener
   {
   public:
-    BridgeDevice(const shared_ptr<IAdapterDevice>&, const shared_ptr<IAdapter>&);
+    BridgeDevice(const std::shared_ptr<IAdapterDevice>&, const std::shared_ptr<IAdapter>&);
     virtual ~BridgeDevice();
 
     QStatus Shutdown();
@@ -22,7 +22,7 @@ namespace bridge
       return m_busAttachment;
     }
 
-    shared_ptr<IAdapterDevice> GetAdapterDevice()
+    std::shared_ptr<IAdapterDevice> GetAdapterDevice()
     {
       return m_device;
     }
@@ -42,14 +42,14 @@ namespace bridge
     QStatus ShutdownAllJoyn();
     QStatus RegisterSignalHandlers(bool isRegister);
 
-    shared_ptr<IAdapterDevice> m_device;
-    shared_ptr<IAdapter> m_adapter;
+    std::shared_ptr<IAdapterDevice> m_device;
+    std::shared_ptr<IAdapter> m_adapter;
     ajn::BusAttachment m_busAttachment;
     DeviceMain m_deviceMain;
     AllJoynAbout m_about;
     std::string m_rootStringForAllJoynNames;
     std::string m_serviceName;
-    std::map<std::string, shared_ptr<DeviceProperty>> m_deviceProperties;
+    std::map<std::string, std::shared_ptr<DeviceProperty>> m_deviceProperties;
   };
 }
 

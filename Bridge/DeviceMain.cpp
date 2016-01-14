@@ -17,7 +17,7 @@ static std::string BuildBusObjectPath(const std::string& name)
   return "/" + encodedName;
 }
 
-bridge::DeviceMain::DeviceMain(BridgeDevice& parent, const shared_ptr<IAdapterDevice>& adapterDevice)
+bridge::DeviceMain::DeviceMain(BridgeDevice& parent, const std::shared_ptr<IAdapterDevice>& adapterDevice)
   : ajn::BusObject(BuildBusObjectPath(adapterDevice->GetName()).c_str(), false)
   , m_parent(parent)
   , m_indexForSignal(1)

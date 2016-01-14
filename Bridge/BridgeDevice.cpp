@@ -9,7 +9,7 @@ namespace
   DSB_DECLARE_LOGNAME(BridgeDevice);
 }
 
-bridge::BridgeDevice::BridgeDevice(const shared_ptr<IAdapterDevice>& device, const shared_ptr<IAdapter>& adapter)
+bridge::BridgeDevice::BridgeDevice(const std::shared_ptr<IAdapterDevice>& device, const std::shared_ptr<IAdapter>& adapter)
   : m_device(device)
   , m_adapter(adapter)
   , m_busAttachment(AllJoynHelper::EncodeStringForAppName(adapter->GetExposedApplicationName()).c_str(), true)

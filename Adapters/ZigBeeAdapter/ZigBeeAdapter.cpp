@@ -61,81 +61,81 @@ adapter::zigbee::Adapter::GetSignals()
   return bridge::AdapterSignalVector();
 }
 
-int32_t
+bridge::AdapterStatus
 adapter::zigbee::Adapter::Initialize()
 {
   return -1;
 }
 
-int32_t
+bridge::AdapterStatus
 adapter::zigbee::Adapter::Shutdown()
 {
   return -1;
 }
 
-int32_t
+bridge::AdapterStatus
 adapter::zigbee::Adapter::EnumDevices(
     bridge::EnumDeviceOptions,
     bridge::AdapterDeviceVector&,
-    shared_ptr<bridge::IAdapterIoRequest>*)
+    std::shared_ptr<bridge::IAdapterIoRequest>*)
 {
   return -1;
 }
 
-int32_t
+bridge::AdapterStatus
 adapter::zigbee::Adapter::GetProperty(
-    shared_ptr<bridge::IAdapterProperty>&,
-    shared_ptr<bridge::IAdapterIoRequest>*)
+    std::shared_ptr<bridge::IAdapterProperty>&,
+    std::shared_ptr<bridge::IAdapterIoRequest>*)
 {
   return -1;
 }
 
-int32_t
+bridge::AdapterStatus
 adapter::zigbee::Adapter::SetProperty(
-    shared_ptr<bridge::IAdapterProperty> const&,
-    shared_ptr<bridge::IAdapterIoRequest>*)
+    std::shared_ptr<bridge::IAdapterProperty> const&,
+    std::shared_ptr<bridge::IAdapterIoRequest>*)
 {
   return -1;
 }
 
-int32_t
+bridge::AdapterStatus
 adapter::zigbee::Adapter::GetPropertyValue(
-    shared_ptr<bridge::IAdapterProperty> const&,
+    std::shared_ptr<bridge::IAdapterProperty> const&,
     std::string const&,
-    shared_ptr<bridge::IAdapterValue>&,
-    shared_ptr<bridge::IAdapterIoRequest>*)
+    std::shared_ptr<bridge::IAdapterValue>&,
+    std::shared_ptr<bridge::IAdapterIoRequest>*)
 {
   return -1;
 }
 
-int32_t
+bridge::AdapterStatus
 adapter::zigbee::Adapter::SetPropertyValue(
-    shared_ptr<bridge::IAdapterProperty> const&,
-    shared_ptr<bridge::IAdapterValue> const&,
-    shared_ptr<bridge::IAdapterIoRequest>*)
+    std::shared_ptr<bridge::IAdapterProperty> const&,
+    std::shared_ptr<bridge::IAdapterValue> const&,
+    std::shared_ptr<bridge::IAdapterIoRequest>*)
 {
   return -1;
 }
 
-int32_t
+bridge::AdapterStatus
 adapter::zigbee::Adapter::CallMethod(
-    shared_ptr<bridge::IAdapterMethod>&,
-    shared_ptr<bridge::IAdapterIoRequest>*)
+    std::shared_ptr<bridge::IAdapterMethod>&,
+    std::shared_ptr<bridge::IAdapterIoRequest>*)
 {
   return -1;
 }
 
-int32_t
+bridge::AdapterStatus
 adapter::zigbee::Adapter::RegisterSignalListener(
   std::string const&,
-  shared_ptr<bridge::IAdapterSignalListener> const&,
+  std::shared_ptr<bridge::IAdapterSignalListener> const&,
   void*,
   bridge::IAdapter::RegistrationHandle&)
 {
   return -1;
 }
 
-int32_t
+bridge::AdapterStatus
 adapter::zigbee::Adapter::UnregisterSignalListener(bridge::IAdapter::RegistrationHandle const&)
 {
   return -1;

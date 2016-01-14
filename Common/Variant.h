@@ -1,11 +1,12 @@
 #pragma once
 
+#include "Common/Assert.h"
+
 #include <stdint.h>
 #include <string.h>
 #include <stdlib.h>
 #include <string>
 #include <vector>
-#include "defines.h"
 
 namespace common
 {

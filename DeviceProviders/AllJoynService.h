@@ -1,35 +1,37 @@
 #pragma once
 
-#include "Common/defines.h"
-
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wignored-qualifiers"
 #include <alljoyn/BusAttachment.h>
 #include <alljoyn/ProxyBusObject.h>
 #include <alljoyn/SessionListener.h>
+#pragma GCC diagnostic pop
 
 #include <map>
+#include <memory>
 
 class AllJoynBusObject;
 class AllJoynProvider;
 
-class AllJoynService : public enable_shared_from_this<AllJoynService>
+class AllJoynService : public std::enable_shared_from_this<AllJoynService>
 {
 public:
-  static shared_ptr<AllJoynService> Create(shared_ptr<AllJoynProvider> const& provider,
+  static std::shared_ptr<AllJoynService> Create(std::shared_ptr<AllJoynProvider> const& provider,
     std::string const& serviceName, ajn::SessionPort port)
   {
-    return shared_ptr<AllJoynService>(new AllJoynService(provider, serviceName, port));
+    return std::shared_ptr<AllJoynService>(new AllJoynService(provider, serviceName, port));
   }
 
 public:
-  AllJoynService(shared_ptr<AllJoynProvider> const& provider, std::string const& serviceName, ajn::SessionPort port);
+  AllJoynService(std::shared_ptr<AllJoynProvider> const& provider, std::string const& serviceName, ajn::SessionPort port);
   ~AllJoynService();
 
   void Initialize(ajn::MsgArg const& aboutDataArg, ajn::MsgArg const& objectDescriptionArg);
   void Shutdown();
 
-  shared_ptr<AllJoynBusObject> GetBusObject(std::string const& path);
+  std::shared_ptr<AllJoynBusObject> GetBusObject(std::string const& path);
 
-  shared_ptr<AllJoynProvider> GetProvider() const
+  std::shared_ptr<AllJoynProvider> GetProvider() const
     { return m_provider.lock(); }
 
   ajn::BusAttachment* GetBusAttachment() const;
@@ -63,12 +65,12 @@ private:
   void OnSessionMemberRemoved(ajn::SessionId sessionId, char const* uniqueName);
 
 private:
-  typedef std::map<std::string, weak_ptr<AllJoynBusObject> > object_map_type;
+  typedef std::map<std::string, std::weak_ptr<AllJoynBusObject> > object_map_type;
 
-  weak_ptr<AllJoynProvider>     m_provider;
+  std::weak_ptr<AllJoynProvider>     m_provider;
   std::string                   m_name;
   ajn::SessionPort              m_sessionPort;
-  shared_ptr<AllJoynBusObject>  m_busObject;
+  std::shared_ptr<AllJoynBusObject>  m_busObject;
   ajn::SessionId                m_sessionId;
   object_map_type               m_objectsMap;
   pthread_mutex_t               m_mutex;

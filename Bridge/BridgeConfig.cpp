@@ -1,6 +1,8 @@
 #include "BridgeConfig.h"
 #include "Common/Log.h"
 
+#include <memory>
+#include <mutex>
 #include <string>
 #include <sstream>
 #include <string.h>
@@ -21,21 +23,13 @@ namespace
     if (!error)
       return;
 
-    common::Logger::Level level = common::Logger::DSB_LOGLEVEL_INFO;
+    common::LogLevel level = common::LogLevel::Info;
     switch (error->level)
     {
-      case XML_ERR_NONE:
-        level = common::Logger::DSB_LOGLEVEL_DEBUG;
-        break;
-      case XML_ERR_WARNING:
-        level = common::Logger::DSB_LOGLEVEL_WARN;
-        break;
-      case XML_ERR_ERROR:
-        level = common::Logger::DSB_LOGLEVEL_ERROR;
-        break;
-      case XML_ERR_FATAL:
-        level = common::Logger::DSB_LOGLEVEL_FATAL;
-        break;
+      case XML_ERR_NONE: level = common::LogLevel::Debug; break;
+      case XML_ERR_WARNING: level = common::LogLevel::Warn; break;
+      case XML_ERR_ERROR: level = common::LogLevel::Error; break;
+      case XML_ERR_FATAL: level = common::LogLevel::Fatal; break;
     }
 
     // remove newline. I hate blank lines in logfiles.
@@ -153,6 +147,23 @@ namespace
     DSBLOG_INFO("%s == %s", xpath, content.c_str());
     return content;
   }
+
+  class LibXmlInitializer
+  {
+  public:
+    LibXmlInitializer()
+    {
+      xmlInitParser();
+    }
+
+    ~LibXmlInitializer()
+    {
+      xmlCleanupParser();
+    }
+  };
+
+  std::once_flag libXmlInit;
+  std::shared_ptr<LibXmlInitializer> libXmlInitializer;
 }
 
 bridge::BridgeConfig::BridgeConfig()
@@ -174,7 +185,10 @@ bridge::BridgeConfig::FromFile(std::string const& fileName)
 
   m_fileName = fileName;
   installXmlLogger();
-  xmlInitParser();
+
+  std::call_once(libXmlInit, [] {
+    if (!libXmlInitializer) libXmlInitializer.reset(new LibXmlInitializer());
+  });
 
   xmlDocPtr doc = xmlParseFile(m_fileName.c_str());
   if (!doc)

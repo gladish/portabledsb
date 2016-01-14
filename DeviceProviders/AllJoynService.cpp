@@ -3,7 +3,7 @@
 #include <alljoyn/Session.h>
 #include <pthread.h>
 
-AllJoynService::AllJoynService(shared_ptr<AllJoynProvider> const& provider, std::string const& serviceName, ajn::SessionPort port)
+AllJoynService::AllJoynService(std::shared_ptr<AllJoynProvider> const& provider, std::string const& serviceName, ajn::SessionPort port)
   : m_provider(provider)
   , m_name(serviceName)
   , m_sessionPort(port)
@@ -57,10 +57,10 @@ AllJoynService::Shutdown()
   pthread_mutex_unlock(&m_mutex);
 }
 
-shared_ptr<AllJoynBusObject>
+std::shared_ptr<AllJoynBusObject>
 AllJoynService::GetBusObject(std::string const& path)
 {
-  shared_ptr<AllJoynBusObject> busObject;
+  std::shared_ptr<AllJoynBusObject> busObject;
 
   pthread_mutex_lock(&m_mutex);
   object_map_type::iterator itr = m_objectsMap.find(path);
@@ -83,7 +83,7 @@ AllJoynService::GetBusAttachment() const
 void
 AllJoynService::OnSessionLost(ajn::SessionId /*sessionId*/, ajn::SessionListener::SessionLostReason /*reason*/)
 {
-  shared_ptr<AllJoynProvider> provider = GetProvider();
+  std::shared_ptr<AllJoynProvider> provider = GetProvider();
   if (provider)
   {
     provider->RemoveSession(shared_from_this());

@@ -1,9 +1,9 @@
 #pragma once
 
 #include "Bridge/IAdapter.h"
-#include "Common/defines.h"
 
 #include <map>
+#include <memory>
 
 namespace adapters
 {
@@ -12,7 +12,7 @@ namespace mock
   class MockAdapterDevice;
   class MockAdapterSignal;
 
-  class MockAdapter : public bridge::IAdapter, public enable_shared_from_this<bridge::IAdapter>
+  class MockAdapter : public bridge::IAdapter, public std::enable_shared_from_this<bridge::IAdapter>
   {
   public:
     MockAdapter();
@@ -26,52 +26,54 @@ namespace mock
     virtual common::Guid GetExposedApplicationGuid();
     virtual bridge::AdapterSignalVector GetSignals();
 
-    virtual int32_t Initialize();
-    virtual int32_t Shutdown();
+    virtual std::string GetStatusText(bridge::AdapterStatus st);
 
-    virtual int32_t GetConfiguration(std::vector<uint8_t>* /*configData*/)
+    virtual bridge::AdapterStatus Initialize(std::shared_ptr<bridge::IAdapterLog> const& log);
+    virtual bridge::AdapterStatus Shutdown();
+
+    virtual bridge::AdapterStatus GetConfiguration(std::vector<uint8_t>* /*configData*/)
       { return 0; }
 
-    virtual int32_t SetConfiguration(std::vector<uint8_t> const& /*configData*/)
+    virtual bridge::AdapterStatus SetConfiguration(std::vector<uint8_t> const& /*configData*/)
       { return 0; }
 
-    virtual int32_t EnumDevices(
+    virtual bridge::AdapterStatus EnumDevices(
       bridge::EnumDeviceOptions opts,
       bridge::AdapterDeviceVector& deviceList,
-      shared_ptr<bridge::IAdapterIoRequest>* req);
+      std::shared_ptr<bridge::IAdapterIoRequest>* req);
 
-    virtual int32_t GetProperty(
-      shared_ptr<bridge::IAdapterProperty>& prop,
-      shared_ptr<bridge::IAdapterIoRequest>* req);
+    virtual bridge::AdapterStatus GetProperty(
+      std::shared_ptr<bridge::IAdapterProperty>& prop,
+      std::shared_ptr<bridge::IAdapterIoRequest>* req);
 
-    virtual int32_t SetProperty(
-      shared_ptr<bridge::IAdapterProperty> const& prop,
-      shared_ptr<bridge::IAdapterIoRequest>* req);
+    virtual bridge::AdapterStatus SetProperty(
+      std::shared_ptr<bridge::IAdapterProperty> const& prop,
+      std::shared_ptr<bridge::IAdapterIoRequest>* req);
 
-    virtual int32_t GetPropertyValue(
-      shared_ptr<bridge::IAdapterProperty> const& prop,
+    virtual bridge::AdapterStatus GetPropertyValue(
+      std::shared_ptr<bridge::IAdapterProperty> const& prop,
       std::string const& attributeName,
-      shared_ptr<bridge::IAdapterValue>& value,
-      shared_ptr<bridge::IAdapterIoRequest>* req);
+      std::shared_ptr<bridge::IAdapterValue>& value,
+      std::shared_ptr<bridge::IAdapterIoRequest>* req);
 
-    virtual int32_t SetPropertyValue(
-      shared_ptr<bridge::IAdapterProperty> const& prop,
-      shared_ptr<bridge::IAdapterValue> const& value,
-      shared_ptr<bridge::IAdapterIoRequest>* req);
+    virtual bridge::AdapterStatus SetPropertyValue(
+      std::shared_ptr<bridge::IAdapterProperty> const& prop,
+      std::shared_ptr<bridge::IAdapterValue> const& value,
+      std::shared_ptr<bridge::IAdapterIoRequest>* req);
 
-    virtual int32_t CallMethod(
-      shared_ptr<bridge::IAdapterMethod>& method,
-      shared_ptr<bridge::IAdapterIoRequest>* req);
+    virtual bridge::AdapterStatus CallMethod(
+      std::shared_ptr<bridge::IAdapterMethod>& method,
+      std::shared_ptr<bridge::IAdapterIoRequest>* req);
 
-    virtual int32_t RegisterSignalListener(
+    virtual bridge::AdapterStatus RegisterSignalListener(
       std::string const& signalName,
-      shared_ptr<bridge::IAdapterSignalListener> const& listener,
+      std::shared_ptr<bridge::IAdapterSignalListener> const& listener,
       void* argp,
       bridge::IAdapter::RegistrationHandle& handle);
 
-    virtual int32_t UnregisterSignalListener(bridge::IAdapter::RegistrationHandle const& h);
+    virtual bridge::AdapterStatus UnregisterSignalListener(bridge::IAdapter::RegistrationHandle const& h);
 
-    int32_t NotifySignalListeners(shared_ptr<MockAdapterSignal> const& signal);
+    bridge::AdapterStatus NotifySignalListeners(std::shared_ptr<MockAdapterSignal> const& signal);
 
   private:
     void CreateMockDevices();
@@ -84,13 +86,14 @@ namespace mock
     std::string m_exposedAdapterPrefix;
     std::string m_exposedApplicationName;
     common::Guid m_exposedApplicationGuid;
+    std::shared_ptr<bridge::IAdapterLog> m_log;
 
-    std::vector< shared_ptr<MockAdapterDevice> > m_devices;
-    std::vector< shared_ptr<MockAdapterSignal> > m_signals;
+    std::vector< std::shared_ptr<MockAdapterDevice> > m_devices;
+    std::vector< std::shared_ptr<MockAdapterSignal> > m_signals;
 
     struct RegisteredSignal
     {
-      shared_ptr<bridge::IAdapterSignalListener> Listener;
+      std::shared_ptr<bridge::IAdapterSignalListener> Listener;
       void* Context;
       bridge::IAdapter::RegistrationHandle RegHandle;
     };

@@ -1,12 +1,10 @@
 #ifndef __DEVICE_MAIN_H__
 #define __DEVICE_MAIN_H__
 
+#include "Bridge/AllJoynHeaders.h"
+#include "Bridge/IAdapter.h"
+
 #include <map>
-
-#include <alljoyn/BusObject.h>
-#include <alljoyn/InterfaceDescription.h>
-
-#include "IAdapter.h"
 
 namespace bridge
 {
@@ -17,7 +15,7 @@ namespace bridge
   class DeviceMain : public ajn::BusObject
   {
   public:
-    DeviceMain(BridgeDevice& parent, const shared_ptr<IAdapterDevice>&);
+    DeviceMain(BridgeDevice& parent, const std::shared_ptr<IAdapterDevice>&);
     virtual ~DeviceMain();
 
     QStatus Initialize();

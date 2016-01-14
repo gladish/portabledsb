@@ -1,12 +1,9 @@
 #pragma once
 
-#include "Common/defines.h"
 #include "Bridge/BridgeConfig.h"
+#include "Bridge/AllJoynHeaders.h"
 
-#include <alljoyn/BusAttachment.h>
-#include <alljoyn/BusListener.h>
-#include <alljoyn/SessionListener.h>
-#include <alljoyn/SessionPortListener.h>
+#include <memory>
 
 namespace bridge
 {
@@ -28,7 +25,7 @@ namespace bridge
     bool GetObjectConfigItem();
     void ToFile();
 
-    shared_ptr<BridgeConfig> GetBridgeConfig();
+    std::shared_ptr<BridgeConfig> GetBridgeConfig();
 
   private:
     QStatus ShutdownAllJoyn();
@@ -45,7 +42,7 @@ namespace bridge
   private:
     DeviceSystemBridge& m_parent;
     IAdapter& m_adapter;
-    shared_ptr<ajn::BusAttachment> m_busAttachment;
+    std::shared_ptr<ajn::BusAttachment> m_busAttachment;
     std::string m_serviceName;
 
     // BridgeAuthHandler

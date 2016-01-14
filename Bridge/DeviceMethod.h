@@ -1,11 +1,9 @@
 #ifndef __DEVICE_METHOD_H__
 #define __DEVICE_METHOD_H__
 
-#include "IAdapter.h"
+#include "Bridge/IAdapter.h"
+#include "Bridge/AllJoynHeaders.h"
 
-#include <alljoyn/Message.h>
-#include <alljoyn/MsgArg.h>
-#include <alljoyn/Status.h>
 
 namespace bridge
 {
@@ -17,7 +15,7 @@ namespace bridge
     DeviceMethod(DeviceMain&);
     virtual ~DeviceMethod();
 
-    QStatus Initialize(shared_ptr<IAdapterMethod> const& adapterMethod);
+    QStatus Initialize(std::shared_ptr<IAdapterMethod> const& adapterMethod);
 
     // TODO: error code?
     // TODO: should that first arg be constant?
@@ -36,7 +34,7 @@ namespace bridge
     std::string                     m_inSignature;
     std::string                     m_outSignature;
     std::string                     m_parameterNames;
-    shared_ptr<IAdapterMethod>      m_adapterMethod;
+    std::shared_ptr<IAdapterMethod>      m_adapterMethod;
   };
 }
 

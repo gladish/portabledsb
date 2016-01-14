@@ -14,13 +14,6 @@ common::Guid::Guid(uuid_t id)
 common::Guid
 common::Guid::NewGuid()
 {
-#ifdef __linux__
-  char id[17];
-  memset(id, 0, sizeof(id));
-#else
-  uuid_string_t id;
-#endif
-
   uuid_t uuid;
   uuid_generate_random(uuid);
   return Guid(uuid);
@@ -33,10 +26,9 @@ common::Guid::Parse(char const* s)
     return Guid::Null();
 
   uuid_t id;
-  if (uuid_parse(s, id) == 0)
-    return Guid(id);
-  else
-    return Guid::Null();
+  return (uuid_parse(s, id) == 0)
+    ? Guid(id)
+    : Guid::Null();
 }
 
 common::Guid const&

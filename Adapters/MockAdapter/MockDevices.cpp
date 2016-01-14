@@ -1,5 +1,8 @@
 #include "Adapters/MockAdapter/MockDevices.h"
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
+
 namespace
 {
   using namespace adapters::mock;
@@ -275,4 +278,4 @@ adapters::mock::PropertyAttributeIdToString(MockPropertyAttributeId attrId)
   return s;
 }
 
-
+#pragma GCC diagnostic pop

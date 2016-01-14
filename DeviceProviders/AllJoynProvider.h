@@ -1,18 +1,21 @@
 #pragma once
 
-#include "Common/defines.h"
 #include "DeviceProviders/AllJoynStatus.h"
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wignored-qualifiers"
 #include <alljoyn/AboutListener.h>
+#pragma GCC diagnostic pop
 
 #include <map>
+#include <memory>
 #include <string>
 #include <vector>
 #include <queue>
 
 class AllJoynService;
 
-class AllJoynProvider : enable_shared_from_this<AllJoynProvider>
+class AllJoynProvider : std::enable_shared_from_this<AllJoynProvider>
 {
   friend class AboutListener;
 
@@ -26,7 +29,7 @@ public:
   inline ajn::BusAttachment* GetBusAttachment() const
     { return m_bus; }
 
-  void RemoveSession(shared_ptr<AllJoynService> const& service);
+  void RemoveSession(std::shared_ptr<AllJoynService> const& service);
 
 private:
   void AnnounceDiscovery(char const* serviceName, uint16_t version, ajn::SessionPort port,
@@ -81,8 +84,8 @@ private:
   pthread_cond_t        m_cond;
   std::queue<WorkItem>  m_aboutHandlerQueue;
 
-  typedef std::vector< shared_ptr<AllJoynService> > service_vector_type;
-  typedef std::map< std::string, shared_ptr<AllJoynService> > service_map_type;
+  typedef std::vector< std::shared_ptr<AllJoynService> > service_vector_type;
+  typedef std::map< std::string, std::shared_ptr<AllJoynService> > service_map_type;
 
   service_map_type m_servicesMap;
   service_vector_type m_servicesVector;

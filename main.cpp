@@ -11,9 +11,9 @@ namespace
 {
   DSB_DECLARE_LOGNAME(Main);
 
-  inline shared_ptr<bridge::DeviceSystemBridge> DSB()
+  inline std::shared_ptr<bridge::DeviceSystemBridge> DSB()
   {
-    shared_ptr<bridge::DeviceSystemBridge> b = bridge::DeviceSystemBridge::GetInstance();
+    std::shared_ptr<bridge::DeviceSystemBridge> b = bridge::DeviceSystemBridge::GetInstance();
     assert(b.get() != nullptr);
     return b;
   }
@@ -54,7 +54,7 @@ int main(int /*argc*/, char* /*argv*/ [])
   QStatus st = ER_OK;
 
   bridge::DeviceSystemBridge::InitializeSingleton(
-      shared_ptr<bridge::IAdapter>(new adapters::mock::MockAdapter()));
+      std::shared_ptr<bridge::IAdapter>(new adapters::mock::MockAdapter()));
 
   st = DSB()->Initialize();
   if (st != ER_OK)
@@ -63,10 +63,12 @@ int main(int /*argc*/, char* /*argv*/ [])
     return 1;
   }
 
-  shared_ptr<bridge::IAdapter> adapter = DSB()->GetAdapter();
+  std::shared_ptr<bridge::IAdapter> adapter = DSB()->GetAdapter();
+
+  common::Logger::SetLevel(adapter->GetAdapterName(), common::LogLevel::Debug);
 
   bridge::AdapterDeviceVector deviceList;
-  shared_ptr<bridge::IAdapterIoRequest> req;
+  std::shared_ptr<bridge::IAdapterIoRequest> req;
 
     // TODO: do we need enums for this?
   int32_t ret = adapter->EnumDevices(bridge::EnumDeviceOptions::ForceRefresh, deviceList, &req);
