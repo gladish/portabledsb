@@ -24,7 +24,7 @@ namespace bridge
     QStatus SetDeviceName(char const* s);
     QStatus SetVersion(char const* s);
     QStatus SetApplicationName(char const* s);
-    QStatus SetApplicationGuid(common::Guid const& guid);
+    QStatus SetApplicationGuid(adapter::Guid const& guid);
     QStatus SetDeviceId(char const* s);
     QStatus SetModel(char const* s);
     QStatus SetDescription(char const* s);

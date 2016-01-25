@@ -1,5 +1,5 @@
 #include "BridgeConfig.h"
-#include "Common/Log.h"
+#include "Common/AdapterLog.h"
 
 #include <memory>
 #include <mutex>
@@ -20,16 +20,17 @@ namespace
 
   void libXmlGenericErrorFunc(void* /*ctx*/, xmlErrorPtr error)
   {
+    static std::string logName = "libxml";
     if (!error)
       return;
 
-    common::LogLevel level = common::LogLevel::Info;
+    adapter::LogLevel level = adapter::LogLevel::Info;
     switch (error->level)
     {
-      case XML_ERR_NONE: level = common::LogLevel::Debug; break;
-      case XML_ERR_WARNING: level = common::LogLevel::Warn; break;
-      case XML_ERR_ERROR: level = common::LogLevel::Error; break;
-      case XML_ERR_FATAL: level = common::LogLevel::Fatal; break;
+      case XML_ERR_NONE: level = adapter::LogLevel::Debug; break;
+      case XML_ERR_WARNING: level = adapter::LogLevel::Warn; break;
+      case XML_ERR_ERROR: level = adapter::LogLevel::Error; break;
+      case XML_ERR_FATAL: level = adapter::LogLevel::Fatal; break;
     }
 
     // remove newline. I hate blank lines in logfiles.
@@ -44,7 +45,7 @@ namespace
     if (!msg)
       msg = "<unknown error>";
 
-    common::Logger::Write("libxml", level, error->file, error->line, "%s", msg);
+    adapter::Log::GetLog(logName)->Write(level, error->file, error->line, "%s", msg);
   }
 
   void installXmlLogger()

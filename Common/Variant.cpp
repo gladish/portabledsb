@@ -22,9 +22,9 @@ namespace
     delete [] arr;
   }
 
-  void freeArray2(void* p, common::Variant::DataType t)
+  void freeArray2(void* p, adapter::TypeId t)
   {
-    typedef common::Variant::DataType dt;
+    typedef adapter::TypeId dt;
     switch (t)
     {
       case dt::BooleanArray:  releaseArray<bool>(p); break;
@@ -65,164 +65,164 @@ namespace
   }
 }
 
-common::Variant::Data::Data()
+adapter::Variant::Data::Data()
 {
-  Type = DataType::Null;
+  Type = TypeId::Null;
   memset(&Item, 0, sizeof(m_data.Item));
   Size = 0;
 }
 
-common::Variant::Variant()
+adapter::Variant::Variant()
   : m_data()
 {
 }
 
-common::Variant::Variant(bool b)
+adapter::Variant::Variant(bool b)
   : m_data()
 {
-  m_data.Type = DataType::Boolean;
+  m_data.Type = TypeId::Boolean;
   m_data.Item.v_bool = b;
 }
 
-common::Variant::Variant(std::vector<bool> const& v)
+adapter::Variant::Variant(std::vector<bool> const& v)
   : m_data()
 {
-  m_data.Type = DataType::BooleanArray;
+  m_data.Type = TypeId::BooleanArray;
   AllocAndCopy(m_data, v);
 }
 
-common::Variant::Variant(uint8_t y)
+adapter::Variant::Variant(uint8_t y)
   : m_data()
 {
-  m_data.Type = DataType::UInt8;
+  m_data.Type = TypeId::UInt8;
   m_data.Item.v_uint8 = y;
 }
 
-common::Variant::Variant(std::vector<uint8_t> const& v)
+adapter::Variant::Variant(std::vector<uint8_t> const& v)
   : m_data()
 {
-  m_data.Type = DataType::UInt8Array;
+  m_data.Type = TypeId::UInt8Array;
   AllocAndCopy(m_data, v);
 }
 
 
-common::Variant::Variant(int16_t n)
+adapter::Variant::Variant(int16_t n)
   : m_data()
 {
-  m_data.Type = DataType::Int16;
+  m_data.Type = TypeId::Int16;
   m_data.Item.v_int16 = n;
 }
 
-common::Variant::Variant(std::vector<uint16_t> const& v)
+adapter::Variant::Variant(std::vector<uint16_t> const& v)
   : m_data()
 {
-  m_data.Type = DataType::UInt16Array;
+  m_data.Type = TypeId::UInt16Array;
   AllocAndCopy(m_data, v);
 }
 
-common::Variant::Variant(uint16_t q)
+adapter::Variant::Variant(uint16_t q)
   : m_data()
 {
-  m_data.Type = DataType::UInt16;
+  m_data.Type = TypeId::UInt16;
   m_data.Item.v_uint16 = q;
 }
 
-common::Variant::Variant(std::vector<int16_t> const& v)
+adapter::Variant::Variant(std::vector<int16_t> const& v)
   : m_data()
 {
-  m_data.Type = DataType::Int16Array;
+  m_data.Type = TypeId::Int16Array;
   AllocAndCopy(m_data, v);
 }
 
-common::Variant::Variant(int32_t i)
+adapter::Variant::Variant(int32_t i)
   : m_data()
 {
-  m_data.Type = DataType::Int32;
+  m_data.Type = TypeId::Int32;
   m_data.Item.v_int32 = i;
 }
 
-common::Variant::Variant(std::vector<int32_t> const& v)
+adapter::Variant::Variant(std::vector<int32_t> const& v)
   : m_data()
 {
-  m_data.Type = DataType::Int32Array;
+  m_data.Type = TypeId::Int32Array;
   AllocAndCopy(m_data, v);
 }
 
-common::Variant::Variant(uint32_t u)
+adapter::Variant::Variant(uint32_t u)
   : m_data()
 {
-  m_data.Type = DataType::UInt32;
+  m_data.Type = TypeId::UInt32;
   m_data.Item.v_uint32 = u;
 }
 
-common::Variant::Variant(std::vector<uint32_t> const& v)
+adapter::Variant::Variant(std::vector<uint32_t> const& v)
   : m_data()
 {
-  m_data.Type = DataType::UInt32Array;
+  m_data.Type = TypeId::UInt32Array;
   AllocAndCopy(m_data, v);
 }
 
-common::Variant::Variant(int64_t x)
+adapter::Variant::Variant(int64_t x)
   : m_data()
 {
-  m_data.Type = DataType::Int64;
+  m_data.Type = TypeId::Int64;
   m_data.Item.v_int64 = x;
 }
 
-common::Variant::Variant(std::vector<int64_t> const& v)
+adapter::Variant::Variant(std::vector<int64_t> const& v)
   : m_data()
 {
-  m_data.Type = DataType::Int64Array;
+  m_data.Type = TypeId::Int64Array;
   AllocAndCopy(m_data, v);
 }
 
-common::Variant::Variant(uint64_t t)
+adapter::Variant::Variant(uint64_t t)
   : m_data()
 {
-  m_data.Type = DataType::UInt64;
+  m_data.Type = TypeId::UInt64;
   m_data.Item.v_uint64 = t;
 }
 
-common::Variant::Variant(std::vector<uint64_t> const& v)
+adapter::Variant::Variant(std::vector<uint64_t> const& v)
   : m_data()
 {
-  m_data.Type = DataType::UInt64Array;
+  m_data.Type = TypeId::UInt64Array;
   AllocAndCopy(m_data, v);
 }
 
-common::Variant::Variant(double d)
+adapter::Variant::Variant(double d)
   : m_data()
 {
-  m_data.Type = DataType::Double;
+  m_data.Type = TypeId::Double;
   m_data.Item.v_double = d;
 }
 
-common::Variant::Variant(std::vector<double> const& v)
+adapter::Variant::Variant(std::vector<double> const& v)
   : m_data()
 {
-  m_data.Type = DataType::DoubleArray;
+  m_data.Type = TypeId::DoubleArray;
   AllocAndCopy(m_data, v);
 }
 
-common::Variant::Variant(DataType t)
+adapter::Variant::Variant(TypeId t)
   : m_data()
 {
   m_data.Type = t;
 }
 
-common::Variant::Variant(std::string const& s)
+adapter::Variant::Variant(std::string const& s)
   : m_data()
 {
-  m_data.Type = DataType::String;
+  m_data.Type = TypeId::String;
   if (!m_data.Item.v_string)
     m_data.Item.v_string = new std::string();
   *m_data.Item.v_string = s;
 }
 
-common::Variant::Variant(char const* s)
+adapter::Variant::Variant(char const* s)
   : m_data()
 {
-  m_data.Type = DataType::String;
+  m_data.Type = TypeId::String;
   if (s)
   {
     if (!m_data.Item.v_string)
@@ -231,29 +231,29 @@ common::Variant::Variant(char const* s)
   }
 }
 
-common::Variant::Variant(std::vector<std::string> const& v)
+adapter::Variant::Variant(std::vector<std::string> const& v)
   : m_data()
 {
-  m_data.Type = DataType::StringArray;
+  m_data.Type = TypeId::StringArray;
   AllocAndCopy(m_data, v);
 }
 
-common::Variant::Variant(Variant const& other)
+adapter::Variant::Variant(Variant const& other)
 {
   AssignFrom(other);
 }
 
-common::Variant::~Variant()
+adapter::Variant::~Variant()
 {
-  if (m_data.Type == DataType::String && m_data.Item.v_string)
+  if (m_data.Type == TypeId::String && m_data.Item.v_string)
     delete m_data.Item.v_string;
 
   if (IsArray() && m_data.Item.v_arr)
     freeArray2(m_data.Item.v_arr, m_data.Type);
 }
 
-common::Variant&
-common::Variant::operator=(Variant const& other)
+adapter::Variant&
+adapter::Variant::operator=(Variant const& other)
 {
   if (&other != this)
     AssignFrom(other);
@@ -261,95 +261,95 @@ common::Variant::operator=(Variant const& other)
 }
 
 bool
-common::Variant::IsArray() const
+adapter::Variant::IsArray() const
 {
   // relies on knowing order of enum
-  return GetType() > DataType::String;
+  return GetType() > TypeId::String;
 }
 
 int
-common::Variant::Length() const
+adapter::Variant::Length() const
 {
   if (!IsArray()) return -1;
   return m_data.Size;
 }
 
 std::vector<bool>
-common::Variant::ToBooleanArray(bool* ok) const
+adapter::Variant::ToBooleanArray(bool* ok) const
 {
-  return GetArray<bool>(DataType::BooleanArray, ok);
+  return GetArray<bool>(TypeId::BooleanArray, ok);
 }
 
 std::vector<uint8_t>
-common::Variant::ToUInt8Array(bool* ok) const
+adapter::Variant::ToUInt8Array(bool* ok) const
 {
-  return GetArray<uint8_t>(DataType::UInt8Array, ok);
+  return GetArray<uint8_t>(TypeId::UInt8Array, ok);
 }
 
 std::vector<int16_t>
-common::Variant::ToInt16Array(bool* ok) const
+adapter::Variant::ToInt16Array(bool* ok) const
 {
-  return GetArray<int16_t>(DataType::Int16Array, ok);
+  return GetArray<int16_t>(TypeId::Int16Array, ok);
 }
 
 std::vector<uint16_t>
-common::Variant::ToUInt16Array(bool* ok) const
+adapter::Variant::ToUInt16Array(bool* ok) const
 {
-  return GetArray<uint16_t>(DataType::UInt16Array, ok);
+  return GetArray<uint16_t>(TypeId::UInt16Array, ok);
 }
 
 std::vector<int32_t>
-common::Variant::ToInt32Array(bool* ok) const
+adapter::Variant::ToInt32Array(bool* ok) const
 {
-  return GetArray<int32_t>(DataType::Int32Array, ok);
+  return GetArray<int32_t>(TypeId::Int32Array, ok);
 }
 
 std::vector<uint32_t>
-common::Variant::ToUInt32Array(bool* ok) const
+adapter::Variant::ToUInt32Array(bool* ok) const
 {
-  return GetArray<uint32_t>(DataType::UInt32Array, ok);
+  return GetArray<uint32_t>(TypeId::UInt32Array, ok);
 }
 
 std::vector<int64_t>
-common::Variant::ToInt64Array(bool* ok) const
+adapter::Variant::ToInt64Array(bool* ok) const
 {
-  return GetArray<int64_t>(DataType::Int64Array, ok);
+  return GetArray<int64_t>(TypeId::Int64Array, ok);
 }
 
 std::vector<uint64_t>
-common::Variant::ToUInt64Array(bool* ok) const
+adapter::Variant::ToUInt64Array(bool* ok) const
 {
-  return GetArray<uint64_t>(DataType::UInt64Array, ok);
+  return GetArray<uint64_t>(TypeId::UInt64Array, ok);
 }
 
 std::vector<double>
-common::Variant::ToDoubleArray(bool* ok) const
+adapter::Variant::ToDoubleArray(bool* ok) const
 {
-  return GetArray<double>(DataType::DoubleArray, ok);
+  return GetArray<double>(TypeId::DoubleArray, ok);
 }
 
 std::vector<std::string>
-common::Variant::ToStringArray(bool* ok) const
+adapter::Variant::ToStringArray(bool* ok) const
 {
-  return GetArray<std::string>(DataType::StringArray, ok);
+  return GetArray<std::string>(TypeId::StringArray, ok);
 }
 
 void
-common::Variant::AssignFrom(Variant const& other)
+adapter::Variant::AssignFrom(Variant const& other)
 {
   switch (other.m_data.Type)
   {
-    case DataType::Null: break;
-    case DataType::Boolean: m_data.Item.v_bool = other.m_data.Item.v_bool; break;
-    case DataType::UInt8:   m_data.Item.v_uint8 = other.m_data.Item.v_uint8; break;
-    case DataType::Int16:   m_data.Item.v_int16 = other.m_data.Item.v_int16; break;
-    case DataType::UInt16:  m_data.Item.v_uint16 = other.m_data.Item.v_uint16; break;
-    case DataType::Int32:   m_data.Item.v_int32 = other.m_data.Item.v_int32; break;
-    case DataType::UInt32:  m_data.Item.v_uint32 = other.m_data.Item.v_uint32; break;
-    case DataType::Int64:   m_data.Item.v_int64 = other.m_data.Item.v_int64; break;
-    case DataType::UInt64:  m_data.Item.v_uint64 = other.m_data.Item.v_uint64; break;
-    case DataType::Double:  m_data.Item.v_double = other.m_data.Item.v_double; break;
-    case DataType::String:
+    case TypeId::Null: break;
+    case TypeId::Boolean: m_data.Item.v_bool = other.m_data.Item.v_bool; break;
+    case TypeId::UInt8:   m_data.Item.v_uint8 = other.m_data.Item.v_uint8; break;
+    case TypeId::Int16:   m_data.Item.v_int16 = other.m_data.Item.v_int16; break;
+    case TypeId::UInt16:  m_data.Item.v_uint16 = other.m_data.Item.v_uint16; break;
+    case TypeId::Int32:   m_data.Item.v_int32 = other.m_data.Item.v_int32; break;
+    case TypeId::UInt32:  m_data.Item.v_uint32 = other.m_data.Item.v_uint32; break;
+    case TypeId::Int64:   m_data.Item.v_int64 = other.m_data.Item.v_int64; break;
+    case TypeId::UInt64:  m_data.Item.v_uint64 = other.m_data.Item.v_uint64; break;
+    case TypeId::Double:  m_data.Item.v_double = other.m_data.Item.v_double; break;
+    case TypeId::String:
     {
       if (other.m_data.Item.v_string)
       {
@@ -361,43 +361,43 @@ common::Variant::AssignFrom(Variant const& other)
     break;
 
     // arrays
-    case DataType::BooleanArray:
+    case TypeId::BooleanArray:
       AssignFromArray<bool>(m_data, other.m_data);
       break;
 
-    case DataType::UInt8Array:
+    case TypeId::UInt8Array:
       AssignFromArray<uint8_t>(m_data, other.m_data);
       break;
 
-    case DataType::Int16Array:
+    case TypeId::Int16Array:
       AssignFromArray<int16_t>(m_data, other.m_data);
       break;
 
-    case DataType::UInt16Array:
+    case TypeId::UInt16Array:
       AssignFromArray<uint16_t>(m_data, other.m_data);
       break;
 
-    case DataType::Int32Array:
+    case TypeId::Int32Array:
       AssignFromArray<int32_t>(m_data, other.m_data);
       break;
 
-    case DataType::UInt32Array:
+    case TypeId::UInt32Array:
       AssignFromArray<uint32_t>(m_data, other.m_data);
       break;
 
-    case DataType::Int64Array:
+    case TypeId::Int64Array:
       AssignFromArray<int64_t>(m_data, other.m_data);
       break;
 
-    case DataType::UInt64Array:
+    case TypeId::UInt64Array:
       AssignFromArray<uint64_t>(m_data, other.m_data);
       break;
 
-    case DataType::DoubleArray:
+    case TypeId::DoubleArray:
       AssignFromArray<double>(m_data, other.m_data);
       break;
 
-    case DataType::StringArray:
+    case TypeId::StringArray:
       AssignFromArray<std::string>(m_data, other.m_data);
       break;
   }
@@ -405,7 +405,7 @@ common::Variant::AssignFrom(Variant const& other)
 }
 
 bool
-common::Variant::CanConvert(DataType t) const
+adapter::Variant::CanConvert(TypeId t) const
 {
   if (m_data.Type == t)
     return true;
@@ -413,15 +413,15 @@ common::Variant::CanConvert(DataType t) const
   bool canConvert = false;
   switch (m_data.Type)
   {
-    case DataType::Null:  break;
-    case DataType::Boolean: if (!canConvert) canConvert = (t == DataType::Boolean);
-    case DataType::UInt8:   if (!canConvert) canConvert = (t == DataType::UInt8);
-    case DataType::Int16:   if (!canConvert) canConvert = (t == DataType::Int16);
-    case DataType::UInt16:  if (!canConvert) canConvert = (t == DataType::UInt16);
-    case DataType::Int32:   if (!canConvert) canConvert = (t == DataType::Int32);
-    case DataType::UInt32:  if (!canConvert) canConvert = (t == DataType::UInt32);
-    case DataType::Int64:   if (!canConvert) canConvert = (t == DataType::Int64);
-    case DataType::UInt64:  if (!canConvert) canConvert = (t == DataType::UInt64);
+    case TypeId::Null:  break;
+    case TypeId::Boolean: if (!canConvert) canConvert = (t == TypeId::Boolean);
+    case TypeId::UInt8:   if (!canConvert) canConvert = (t == TypeId::UInt8);
+    case TypeId::Int16:   if (!canConvert) canConvert = (t == TypeId::Int16);
+    case TypeId::UInt16:  if (!canConvert) canConvert = (t == TypeId::UInt16);
+    case TypeId::Int32:   if (!canConvert) canConvert = (t == TypeId::Int32);
+    case TypeId::UInt32:  if (!canConvert) canConvert = (t == TypeId::UInt32);
+    case TypeId::Int64:   if (!canConvert) canConvert = (t == TypeId::Int64);
+    case TypeId::UInt64:  if (!canConvert) canConvert = (t == TypeId::UInt64);
       break;
     default: assert(false);
       break;
@@ -430,7 +430,7 @@ common::Variant::CanConvert(DataType t) const
 }
 
 std::string
-common::Variant::ToString() const
+adapter::Variant::ToString() const
 {
   if (IsArray())
   {
@@ -438,17 +438,17 @@ common::Variant::ToString() const
     buff << '[';
     switch (m_data.Type)
     {
-      case DataType::Null: break;
-      case DataType::BooleanArray:  printArray<bool, bool>(buff, m_data.Item.v_arr, m_data.Size); break;
-      case DataType::UInt8Array:    printArray<uint8_t, int>(buff, m_data.Item.v_arr, m_data.Size); break;
-      case DataType::Int16Array:    printArray<int16_t, int>(buff, m_data.Item.v_arr, m_data.Size); break;
-      case DataType::UInt16Array:   printArray<uint16_t, int>(buff, m_data.Item.v_arr, m_data.Size); break;
-      case DataType::Int32Array:    printArray<int32_t, int>(buff, m_data.Item.v_arr, m_data.Size); break;
-      case DataType::UInt32Array:   printArray<uint32_t, uint32_t>(buff, m_data.Item.v_arr, m_data.Size); break;
-      case DataType::Int64Array:    printArray<int64_t, int64_t>(buff, m_data.Item.v_arr, m_data.Size); break;
-      case DataType::UInt64Array:   printArray<uint64_t, uint64_t>(buff, m_data.Item.v_arr, m_data.Size); break;
-      case DataType::DoubleArray:   printArray<double, double>(buff, m_data.Item.v_arr, m_data.Size); break;
-      case DataType::StringArray:   printArray<std::string, std::string>(buff, m_data.Item.v_arr, m_data.Size); break;
+      case TypeId::Null: break;
+      case TypeId::BooleanArray:  printArray<bool, bool>(buff, m_data.Item.v_arr, m_data.Size); break;
+      case TypeId::UInt8Array:    printArray<uint8_t, int>(buff, m_data.Item.v_arr, m_data.Size); break;
+      case TypeId::Int16Array:    printArray<int16_t, int>(buff, m_data.Item.v_arr, m_data.Size); break;
+      case TypeId::UInt16Array:   printArray<uint16_t, int>(buff, m_data.Item.v_arr, m_data.Size); break;
+      case TypeId::Int32Array:    printArray<int32_t, int>(buff, m_data.Item.v_arr, m_data.Size); break;
+      case TypeId::UInt32Array:   printArray<uint32_t, uint32_t>(buff, m_data.Item.v_arr, m_data.Size); break;
+      case TypeId::Int64Array:    printArray<int64_t, int64_t>(buff, m_data.Item.v_arr, m_data.Size); break;
+      case TypeId::UInt64Array:   printArray<uint64_t, uint64_t>(buff, m_data.Item.v_arr, m_data.Size); break;
+      case TypeId::DoubleArray:   printArray<double, double>(buff, m_data.Item.v_arr, m_data.Size); break;
+      case TypeId::StringArray:   printArray<std::string, std::string>(buff, m_data.Item.v_arr, m_data.Size); break;
       default:
         assert(false);
         break;
@@ -457,7 +457,7 @@ common::Variant::ToString() const
     return buff.str();
   }
 
-  if (m_data.Type == DataType::String)
+  if (m_data.Type == TypeId::String)
   {
     return (m_data.Item.v_string != NULL)
       ? *m_data.Item.v_string
@@ -467,15 +467,15 @@ common::Variant::ToString() const
   std::stringstream buff;
   switch (m_data.Type)
   {
-    case DataType::Boolean:   buff << m_data.Item.v_bool; break;
-    case DataType::UInt8:     buff << (int) m_data.Item.v_uint8; break;
-    case DataType::Int16:     buff << m_data.Item.v_int16; break;
-    case DataType::UInt16:    buff << m_data.Item.v_uint16; break;
-    case DataType::Int32:     buff << m_data.Item.v_int32; break;
-    case DataType::UInt32:    buff << m_data.Item.v_uint32; break;
-    case DataType::Int64:     buff << m_data.Item.v_int64; break;
-    case DataType::UInt64:    buff << m_data.Item.v_uint64; break;
-    case DataType::Double:    buff << m_data.Item.v_double; break;
+    case TypeId::Boolean:   buff << (m_data.Item.v_bool ? "true" : "false"); break;
+    case TypeId::UInt8:     buff << (int) m_data.Item.v_uint8; break;
+    case TypeId::Int16:     buff << m_data.Item.v_int16; break;
+    case TypeId::UInt16:    buff << m_data.Item.v_uint16; break;
+    case TypeId::Int32:     buff << m_data.Item.v_int32; break;
+    case TypeId::UInt32:    buff << m_data.Item.v_uint32; break;
+    case TypeId::Int64:     buff << m_data.Item.v_int64; break;
+    case TypeId::UInt64:    buff << m_data.Item.v_uint64; break;
+    case TypeId::Double:    buff << m_data.Item.v_double; break;
     default:
       assert(false);
       break;
@@ -484,30 +484,30 @@ common::Variant::ToString() const
 }
 
 bool
-common::Variant::operator < (Variant const& rhs) const
+adapter::Variant::operator < (Variant const& rhs) const
 {
   bool lessThan = false;
   if (m_data.Type == rhs.m_data.Type)
   {
     switch (m_data.Type)
     {
-      case DataType::Null:
+      case TypeId::Null:
         lessThan = false;
         break;
-      case DataType::Boolean:
-      case DataType::UInt8:
-      case DataType::Int16:
-      case DataType::UInt16:
-      case DataType::Int32:
-      case DataType::UInt32:
-      case DataType::Int64:
-      case DataType::UInt64:
+      case TypeId::Boolean:
+      case TypeId::UInt8:
+      case TypeId::Int16:
+      case TypeId::UInt16:
+      case TypeId::Int32:
+      case TypeId::UInt32:
+      case TypeId::Int64:
+      case TypeId::UInt64:
         lessThan = m_data.Item.v_uint64 < rhs.m_data.Item.v_uint64;
         break;
-      case DataType::Double:
+      case TypeId::Double:
         lessThan = m_data.Item.v_double < rhs.m_data.Item.v_double;
         break;
-      case DataType::String:
+      case TypeId::String:
         if (m_data.Item.v_string == NULL)
           lessThan = rhs.m_data.Item.v_string != NULL;
         else if (rhs.m_data.Item.v_string == NULL)
@@ -515,34 +515,34 @@ common::Variant::operator < (Variant const& rhs) const
         else
           lessThan = *m_data.Item.v_string < *rhs.m_data.Item.v_string;
         break;
-      case DataType::BooleanArray:
+      case TypeId::BooleanArray:
         lessThan = vectorCompare<bool>(m_data.Item.v_arr, m_data.Size, rhs.m_data.Item.v_arr, rhs.m_data.Size) < 0;
         break;
-      case DataType::UInt8Array:
+      case TypeId::UInt8Array:
         lessThan = vectorCompare<uint8_t>(m_data.Item.v_arr, m_data.Size, rhs.m_data.Item.v_arr, rhs.m_data.Size) < 0;
         break;
-      case DataType::Int16Array:
+      case TypeId::Int16Array:
         lessThan = vectorCompare<int16_t>(m_data.Item.v_arr, m_data.Size, rhs.m_data.Item.v_arr, rhs.m_data.Size) < 0;;
         break;
-      case DataType::UInt16Array:
+      case TypeId::UInt16Array:
         lessThan = vectorCompare<uint16_t>(m_data.Item.v_arr, m_data.Size, rhs.m_data.Item.v_arr, rhs.m_data.Size) < 0;
         break;
-      case DataType::Int32Array:
+      case TypeId::Int32Array:
         lessThan = vectorCompare<int32_t>(m_data.Item.v_arr, m_data.Size, rhs.m_data.Item.v_arr, rhs.m_data.Size) < 0;
         break;
-      case DataType::UInt32Array:
+      case TypeId::UInt32Array:
         lessThan = vectorCompare<uint32_t>(m_data.Item.v_arr, m_data.Size, rhs.m_data.Item.v_arr, rhs.m_data.Size) < 0;
         break;
-      case DataType::Int64Array:
+      case TypeId::Int64Array:
         lessThan = vectorCompare<int64_t>(m_data.Item.v_arr, m_data.Size, rhs.m_data.Item.v_arr, rhs.m_data.Size) < 0;
         break;
-      case DataType::UInt64Array:
+      case TypeId::UInt64Array:
         lessThan = vectorCompare<uint64_t>(m_data.Item.v_arr, m_data.Size, rhs.m_data.Item.v_arr, rhs.m_data.Size) < 0;
         break;
-      case DataType::DoubleArray:
+      case TypeId::DoubleArray:
         lessThan = vectorCompare<double>(m_data.Item.v_arr, m_data.Size, rhs.m_data.Item.v_arr, rhs.m_data.Size) < 0;
         break;
-      case DataType::StringArray:
+      case TypeId::StringArray:
         lessThan = vectorCompare<std::string>(m_data.Item.v_arr, m_data.Size, rhs.m_data.Item.v_arr, rhs.m_data.Size) < 0;
         break;
       default:
@@ -552,8 +552,8 @@ common::Variant::operator < (Variant const& rhs) const
   }
   else
   {
-    if (m_data.Type == DataType::Null)
-      lessThan = rhs.m_data.Type != DataType::Null;
+    if (m_data.Type == TypeId::Null)
+      lessThan = rhs.m_data.Type != TypeId::Null;
     else
       lessThan = m_data.Type < rhs.m_data.Type;
   }

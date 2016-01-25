@@ -1,19 +1,19 @@
 #pragma once
 
-#include "IAdapter.h"
+#include "Common/AdapterValue.h"
+
 #include <string>
 #include <vector>
-
 #include <alljoyn/MsgArg.h>
 
 namespace bridge
 {
-  class DeviceMain;
-
   class AllJoynHelper
   {
   public:
-    static QStatus SetMsgArg(IAdapterValue const& adapterValue, ajn::MsgArg& msgArg);
+    static adapter::TypeId GetType(ajn::MsgArg const& msgArg);
+
+    static QStatus SetMsgArg(adapter::Value const& adapterValue, ajn::MsgArg& msgArg);
     
     template<class T>
     static QStatus SetMsgArg(ajn::MsgArg& msgArg, std::string const& sig, std::vector<T> const& arr);
@@ -22,13 +22,13 @@ namespace bridge
     static QStatus GetArrayFromMsgArg(ajn::MsgArg& msgArg, std::string const& sig, std::vector<T>& arr);
 
     
-    static QStatus SetMsgArgFromAdapterObject(IAdapterValue const& adapterValue, ajn::MsgArg& msg, DeviceMain* deviceMain);
+    static QStatus SetMsgArgFromAdapterObject(adapter::Value const& adapterValue, ajn::MsgArg& msg);
 
-    static QStatus GetAdapterValue(IAdapterValue& adapterValue, ajn::MsgArg const& msg);
+    static QStatus GetValue(adapter::Value& adapterValue, ajn::MsgArg const& msg);
 
-    static QStatus GetAdapterObject(IAdapterValue& adapterValue, ajn::MsgArg const& msg, DeviceMain* deviceMain);
+    static QStatus GetAdapterObject(adapter::Value& adapterValue, ajn::MsgArg const& msg);
 
-    static QStatus GetSignature(common::Variant::DataType type, std::string& sig);
+    static std::string GetSignature(adapter::TypeId type);
 
     static void EncodeBusObjectName(std::string const& s, std::string &builtName);
     static void EncodePropertyOrMethodOrSignalName(std::string const& s, std::string &builtName);

@@ -3,25 +3,15 @@ SRCS=DeviceProviders/AllJoynProvider.cpp \
      Bridge/AllJoynAbout.cpp \
      Bridge/AllJoynHelper.cpp \
      Bridge/Bridge.cpp \
+     Bridge/BridgeBusObject.cpp \
      Bridge/BridgeConfig.cpp \
-     Bridge/BridgeDevice.cpp \
      Bridge/ConfigManager.cpp \
-     Bridge/DeviceMain.cpp \
-     Bridge/DeviceMethod.cpp \
-     Bridge/DeviceProperty.cpp \
-     Bridge/DeviceSignal.cpp \
-     Bridge/Log.cpp \
-     Common/Log.cpp \
+     Common/AdapterLog.cpp \
      Common/Variant.cpp \
      Common/Guid.cpp \
      Adapters/MockAdapter/MockAdapter.cpp \
      Adapters/MockAdapter/MockDevices.cpp \
-     Adapters/MockAdapter/MockAdapterDevice.cpp \
-     Adapters/MockAdapter/MockAdapterMethod.cpp \
-     Adapters/MockAdapter/MockAdapterProperty.cpp \
-     Adapters/MockAdapter/MockAdapterSignal.cpp \
-     Adapters/MockAdapter/MockAdapterValue.cpp \
-     Adapters/ZigBeeAdapter/ZigBeeAdapter.cpp \
+     Adapters/MockAdapter/ZigBeeClusterDatabase.cpp \
      main.cpp
 
 TEST_SRCS = Tests/VariantTest.cpp
@@ -32,7 +22,7 @@ LIBXML_INC?=/usr/include/libxml2
 
 ALLJOYN_INSTALL_DIR?=/Users/jgladi200/Work/alljoyn/alljoyn-15.09.00a-src/build/darwin/x86/debug/dist/cpp
 
-CXXFLAGS          = -Wall -Wextra -std=c++11 -I. -I$(ALLJOYN_INSTALL_DIR)/inc -I$(LIBXML_INC)
+CXXFLAGS          = -Wall -Wextra -std=c++11 -I. -I$(ALLJOYN_INSTALL_DIR)/inc -I$(LIBXML_INC) -Wno-unused-parameter
 LDFLAGS           = -L $(ALLJOYN_INSTALL_DIR)/lib -lalljoyn -lcrypto -lxml2
 DEV_PROVIDER_OBJS = $(patsubst %.cpp, %.o, $(SRCS))
 OBJS              = $(DEV_PROVIDER_OBJS)
@@ -53,7 +43,7 @@ ifeq ($(UNAME_S),Linux)
 endif
 
 ifeq ($(DEBUG), 1)
-  CXXFLAGS += -g
+  CXXFLAGS += -g -O0 -fno-inline
 else
   CXXFLAGS += -O2
 endif

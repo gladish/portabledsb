@@ -3,7 +3,7 @@
 #include <uuid/uuid.h>
 #include <string>
 
-namespace common
+namespace adapter
 {
   class Guid
   {
@@ -14,6 +14,8 @@ namespace common
     static Guid Parse(char const* s);
 
     std::string ToString() const;
+
+    uint8_t const* ToByteArray() const;
 
     bool operator <  (Guid const& rhs) const;
     bool operator == (Guid const& rhs) const;

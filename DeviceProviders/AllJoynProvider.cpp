@@ -54,10 +54,10 @@ AllJoynStatus AllJoynProvider::Start()
 {
   QStatus status = ER_OK;
 
-  #define AJ_CHECK(ST) { status = ST; if (status != ER_OK) goto leave; }
+  #define AJ_CHECK(ST) { status = ST; if (status != ER_OK) return AllJoynStatus(status); }
 
   if (m_bus != NULL)
-    goto leave;
+    return AllJoynStatus(ER_FAIL);
 
   if (!m_alljoynInitialized)
   {
@@ -78,10 +78,6 @@ AllJoynStatus AllJoynProvider::Start()
   AJ_CHECK( m_bus->WhoImplements(NULL) );
 
   m_isListening = true;
-
-  leave:
-    if (status != ER_OK)
-      Shutdown();
 
   return AllJoynStatus(status);
 }

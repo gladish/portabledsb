@@ -1,17 +1,17 @@
 #include "Mutex.h"
 
-common::Mutex::Mutex()
+adapter::Mutex::Mutex()
 {
 }
 
 void
-common::Mutex::Lock()
+adapter::Mutex::Lock()
 {
   m_mutex.lock();
 }
 
 void
-common::Mutex::Unlock()
+adapter::Mutex::Unlock()
 {
   m_mutex.unlock();
 }

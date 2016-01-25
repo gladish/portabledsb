@@ -1,8 +1,6 @@
-#include "ConfigManager.h"
-
-#include "AllJoynHelper.h"
-#include "IAdapter.h"
-#include "Common/Log.h"
+#include "Bridge/ConfigManager.h"
+#include "Bridge/AllJoynHelper.h"
+#include "Common/AdapterLog.h"
 
 using namespace bridge;
 
@@ -18,7 +16,7 @@ namespace
   uint32_t const kSessionLinkTimeout = 30; // seconds
 }
 
-ConfigManager::ConfigManager(DeviceSystemBridge& bridge, IAdapter& adapter)
+ConfigManager::ConfigManager(Bridge& bridge, std::shared_ptr<adapter::Adapter> const& adapter)
   : m_parent(bridge)
   , m_adapter(adapter)
   , m_sessionPort(kDSBServicePort)
@@ -46,30 +44,26 @@ ConfigManager::Shutdown()
 QStatus
 ConfigManager::ShutdownAllJoyn()
 {
-  if (!m_busAttachment.get())
+  if (!m_bus)
     return ER_OK;
 
   if (!m_serviceName.empty())
-  {
-    m_busAttachment->CancelAdvertiseName(m_serviceName.c_str(), ajn::TRANSPORT_ANY);
-  }
-  m_busAttachment->UnbindSessionPort(m_sessionPort);
+    m_bus->CancelAdvertiseName(m_serviceName.c_str(), ajn::TRANSPORT_ANY);
+  m_bus->UnbindSessionPort(m_sessionPort);
 
   if (!m_serviceName.empty())
-  {
-    m_busAttachment->ReleaseName(m_serviceName.c_str());
-  }
+    m_bus->ReleaseName(m_serviceName.c_str());
 
-  m_busAttachment->Disconnect();
+  m_bus->Disconnect();
 
   // TODO: Destroy CSP interfaces
   // TODO: remove authentication handler
   // TODO: Shutdown About
 
-  m_busAttachment->Stop();
-  m_busAttachment->UnregisterBusListener(*this);
-  m_busAttachment->Join();
-  m_busAttachment.reset();
+  m_bus->Stop();
+  m_bus->UnregisterBusListener(*this);
+  m_bus->Join();
+  m_bus.reset();
 
   return ER_OK;
 }
@@ -81,22 +75,36 @@ ConfigManager::ConnectToAllJoyn()
   if (st != ER_OK)
     return st;
 
-  m_busAttachment.reset(new ajn::BusAttachment(m_adapter.GetExposedApplicationName().c_str(), true));
-  m_busAttachment->RegisterBusListener(*this);
-  m_busAttachment->Start();
+  m_bus.reset(new ajn::BusAttachment(m_adapter->GetApplicationName().c_str(), true));
+  m_bus->RegisterBusListener(*this);
+  m_bus->Start();
 
   // TODO: AllJoyn about object
 
   // TODO: Initialize CSP bus objects
 
-  st = m_busAttachment->Connect();
-  if (st != ER_OK)
+  bool failedToConnect = false;
+  do
   {
-    DSBLOG_WARN("Failed to connect to AllJoyn bus: %s", QCC_StatusText(st));
-    return st;
+    st = m_bus->Connect();
+    if (st != ER_OK)
+    {
+      if (!failedToConnect)
+        DSBLOG_WARN("Failed to connect to AllJoyn bus: %s", QCC_StatusText(st));
+      failedToConnect = true;
+      sleep(1);
+    }
+    else
+    {
+      failedToConnect = false;
+    }
   }
+  while (st != ER_OK);
 
-  st = m_busAttachment->RequestName(m_serviceName.c_str(), DBUS_NAME_FLAG_REPLACE_EXISTING | DBUS_NAME_FLAG_DO_NOT_QUEUE);
+  if (st == ER_OK)
+    DSBLOG_INFO("connected to: %s", m_bus->GetConnectSpec().c_str());
+
+  st = m_bus->RequestName(m_serviceName.c_str(), DBUS_NAME_FLAG_REPLACE_EXISTING | DBUS_NAME_FLAG_DO_NOT_QUEUE);
   if (st != ER_OK)
   {
     DSBLOG_WARN("Failed to get name %s on AllJoyn bus: %s", m_serviceName.c_str(), QCC_StatusText(st));
@@ -104,14 +112,14 @@ ConfigManager::ConnectToAllJoyn()
   }
 
   ajn::SessionOpts sessionOpts(ajn::SessionOpts::TRAFFIC_MESSAGES, true, ajn::SessionOpts::PROXIMITY_ANY, ajn::TRANSPORT_ANY);
-  st = m_busAttachment->BindSessionPort(m_sessionPort, sessionOpts, *this);
+  st = m_bus->BindSessionPort(m_sessionPort, sessionOpts, *this);
   if (st != ER_OK)
   {
     DSBLOG_WARN("Failed to bind session port: %s", QCC_StatusText(st));
     return st;
   }
 
-  st = m_busAttachment->AdvertiseName(m_serviceName.c_str(), sessionOpts.transports);
+  st = m_bus->AdvertiseName(m_serviceName.c_str(), sessionOpts.transports);
   if (st != ER_OK)
   {
     DSBLOG_WARN("Failed to advertise service name: %s", QCC_StatusText(st));
@@ -128,14 +136,16 @@ ConfigManager::BuildServiceName()
 {
   m_serviceName.clear();
 
-  std::string tmp = AllJoynHelper::EncodeStringForRootServiceName(m_adapter.GetExposedAdapterPrefix());
+  std::string tmp = AllJoynHelper::EncodeStringForRootServiceName(m_adapter->GetAdapterPrefix());
   if (tmp.empty()) {
     return ER_BUS_BAD_BUS_NAME;
   }
 
-  m_serviceName = tmp + ".DeviceSystemBridge";
+  m_serviceName = tmp + ".Bridge";
 
-  tmp = AllJoynHelper::EncodeStringForServiceName(m_adapter.GetAdapterName());
+  adapter::ItemInformation info = m_adapter->GetInfo();
+
+  tmp = AllJoynHelper::EncodeStringForServiceName(info.GetName());
   if (tmp.empty()) {
     m_serviceName.empty();
     return ER_BUS_BAD_BUS_NAME;
@@ -155,8 +165,8 @@ ConfigManager::AcceptSessionJoiner(ajn::SessionPort port, const char*, const ajn
 void
 ConfigManager::SessionJoined(ajn::SessionPort, ajn::SessionId id, const char*)
 {
-  m_busAttachment->EnableConcurrentCallbacks();
-  QStatus st = m_busAttachment->SetSessionListener(id, this);
+  m_bus->EnableConcurrentCallbacks();
+  QStatus st = m_bus->SetSessionListener(id, this);
   if (st != ER_OK)
   {
     DSBLOG_WARN("Failed to set session listener: %s", QCC_StatusText(st));
@@ -164,12 +174,18 @@ ConfigManager::SessionJoined(ajn::SessionPort, ajn::SessionId id, const char*)
   }
 
   uint32_t timeout = kSessionLinkTimeout;
-  st = m_busAttachment->SetLinkTimeout(id, timeout);
+  st = m_bus->SetLinkTimeout(id, timeout);
   if (st != ER_OK)
   {
     DSBLOG_WARN("Failed to set session link timeout to %" PRIu32 ": %s", timeout, QCC_StatusText(st));
     return;
   }
+}
+
+void
+ConfigManager::BusDisconnected()
+{
+  DSBLOG_WARN("someone please reconnect me!");
 }
 
 void

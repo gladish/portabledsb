@@ -1,9 +1,9 @@
 #include "AllJoynAbout.h"
-#include "Common/Log.h"
+#include "Common/AdapterLog.h"
 
 namespace
 {
-  common::Guid const kDefaultAppGuid = common::Guid::Parse("DA9C7763-C3E0-4B3B-B190-5BEF8DF96E4D");
+  adapter::Guid const kDefaultAppGuid = adapter::Guid::Parse("DA9C7763-C3E0-4B3B-B190-5BEF8DF96E4D");
   char const* kDefaultLanguageForAbout = "en";
   char const* kUnknownAdapter = "Unknown Device";
   char const* kUnknownManufacturer = "Unknown";
@@ -108,7 +108,7 @@ AllJoynAbout::ReadDeviceId(std::string&)
 QStatus
 AllJoynAbout::CreateAndSaveDeviceId(std::string& deviceId)
 {
-  common::Guid guid = common::Guid::NewGuid();
+  adapter::Guid guid = adapter::Guid::NewGuid();
   deviceId = guid.ToString();
 
   // TODO: need to persist this configuration 
@@ -149,7 +149,7 @@ AllJoynAbout::SetApplicationName(char const* s)
 }
 
 QStatus
-AllJoynAbout::SetApplicationGuid(common::Guid const& guid)
+AllJoynAbout::SetApplicationGuid(adapter::Guid const& guid)
 {
   return m_aboutData
     ? m_aboutData->SetAppId(guid.ToString().c_str())
