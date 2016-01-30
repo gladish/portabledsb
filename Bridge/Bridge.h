@@ -24,58 +24,16 @@ namespace bridge
     void Initialize();
     void Shutdown();
 
-    inline std::shared_ptr<adapter::Adapter> GetAdapter() const
-      { return m_adapter; }
-
-    //inline ConfigManager *GetConfigManager()
-    //  { return &m_configManager; }
-
-    QStatus InitializeDevices(bool isUpdate = false);
-
   private:
     Bridge(std::shared_ptr<adapter::Adapter> const& adapter);
 
     QStatus RegisterAdapterSignalHandlers(bool isRegister);
     void InitializeAdapter();
     void InitializeInternal();
-
-    void CreateDevice(std::shared_ptr<adapter::Adapter> const& adapter,
-      adapter::Device const& device);
-
-    QStatus UpdateDevice(adapter::Device const& device, bool exposedOnAllJoynBus);
-
+    void InitializeDevices(bool isUpdate = false);
+    void CreateDevice(std::shared_ptr<adapter::Adapter> const& adapter, adapter::Device const& device);
+    void UpdateDevice(adapter::Device const& device, bool exposedOnAllJoynBus);
     void OnAdapterSignal(adapter::Signal const& signal, void* argp);
-
-  private:
-    #if 0
-    class AdapterSignalListener : public IAdapterSignalListener
-    {
-    public:
-      AdapterSignalListener(Bridge& parent)
-        : m_parent(parent)
-        , m_shuttingDown(false)
-      {
-      }
-
-      virtual void AdapterSignalHandler(IAdapterSignal const& signal, void* argp)
-      {
-        if (m_shuttingDown)
-        {
-          return;
-        }
-        m_parent.OnAdapterSignal(signal, argp);
-      }
-
-      void Shutdown()
-      {
-        m_shuttingDown = true;
-      }
-      
-    private:
-      Bridge& m_parent;
-      bool m_shuttingDown;
-    };
-    #endif
 
   private:
     bool                                      m_alljoynInitialized;

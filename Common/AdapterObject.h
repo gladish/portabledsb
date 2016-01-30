@@ -4,11 +4,11 @@
 #include <map>
 #include <stdint.h>
 
-#include "Common/Variant.h"
+#include "Common/Value.h"
 
 namespace adapter
 {
-  typedef std::map< std::string, Variant > AttributeMap;
+  typedef std::map< std::string, Value > AttributeMap;
 
   class Object
   {
@@ -36,13 +36,13 @@ namespace adapter
     AttributeMap const& GetAttributes() const
       { return m_attrs; }
 
-    Variant GetAttribute(std::string const& name) const
+    Value GetAttribute(std::string const& name) const
     {
       auto itr = m_attrs.find(name);
-      return itr != m_attrs.end() ? itr->second : Variant();
+      return itr != m_attrs.end() ? itr->second : Value();
     }
 
-    void AddAttribute(std::string const& name, Variant const& value)
+    void AddAttribute(std::string const& name, Value const& value)
       { m_attrs.insert(AttributeMap::value_type(name, value)); }
 
     void ClearAttributes()

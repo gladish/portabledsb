@@ -93,12 +93,12 @@ adapter::Log::SetLevel(LogLevel level)
 }
 
 bool
-adapter::Log::IsLevelEnabled(std::string const& module, LogLevel level)
+adapter::Log::IsLevelEnabled(LogLevel level)
 {
   std::lock_guard<std::mutex> lock(impl.Mutex);
 
   adapter::LogLevel minLevel = impl.DefaultLevel;
-  LogMap::const_iterator itr = impl.Logs.find(module);
+  LogMap::const_iterator itr = impl.Logs.find(m_name);
   if (itr != impl.Logs.end())
     minLevel = itr->second->m_level;
   return level >= minLevel;

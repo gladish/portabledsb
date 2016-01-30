@@ -3,6 +3,7 @@
 #include "Common/Assert.h"
 
 #include <map>
+#include <sstream>
 
 namespace
 {
@@ -55,147 +56,18 @@ namespace
     { "ad", adapter::TypeId::DoubleArray  },
     { "as", adapter::TypeId::StringArray  },
   };
-}
 
-
-QStatus
-bridge::AllJoynHelper::SetMsgArg(adapter::Value const& adapterValue, ajn::MsgArg& m)
-{
-  QStatus st = ER_OK;
-  adapter::Variant const& val = adapterValue.GetValue();
-
-  std::string const sig = GetSignature(val.GetType());
-
-  switch (val.GetType())
+  template<class T>
+  QStatus Extract(ajn::MsgArg const& m, std::string const& sig, adapter::Value& v)
   {
-    case adapter::TypeId::Null:
-    break;
-
-    case adapter::TypeId::Boolean:
-    {
-      bool b = val.ToBoolean();
-      st = m.Set(sig.c_str(), &b);
-    }
-    break;
-
-    case adapter::TypeId::UInt8:
-    {
-      uint8_t i = val.ToUInt8();
-      st = m.Set(sig.c_str(), &i);
-    }
-    break;
-
-    case adapter::TypeId::Int16:
-    {
-      int16_t i = val.ToInt16();
-      st = m.Set(sig.c_str(), &i);
-    }
-    break;
-
-    case adapter::TypeId::UInt16:
-    {
-      uint16_t u = val.ToUInt16();
-      st = m.Set(sig.c_str(), &u);
-    }
-    break;
-
-    case adapter::TypeId::Int32:
-    {
-      int32_t i = val.ToInt32();
-      st = m.Set(sig.c_str(), &i);
-    }
-    break;
-
-    case adapter::TypeId::UInt32:
-    {
-      uint32_t u = val.ToUInt32();
-      st = m.Set(sig.c_str(), &u);
-    }
-    break;
-
-    case adapter::TypeId::Int64:
-    {
-      int64_t l = val.ToInt64();
-      st = m.Set(sig.c_str(), &l);
-    }
-    break;
-
-    case adapter::TypeId::UInt64:
-    {
-      uint64_t l = val.ToUInt64();
-      st = m.Set(sig.c_str(), &l);
-    }
-    break;
-
-    case adapter::TypeId::Double:
-    {
-      double d = val.ToDouble();
-      st = m.Set(sig.c_str(), &d);
-    }
-    break;
-
-    case adapter::TypeId::String:
-    {
-      std::string s = val.ToString();
-      if (!s.empty())
-      {
-        st = m.Set(sig.c_str(), s.c_str());
-        if (st == ER_OK)
-          m.Stabilize();
-      }
-      else
-      {
-        st = m.Set(sig.c_str(), "");
-      }
-    }
-    break;
-
-    case adapter::TypeId::BooleanArray:
-      /* Using vector<uint8_t> instead of vector<bool>, since vector<bool> is a
-       * bitfield and we can't access the underlying array easily.
-       * http://en.cppreference.com/w/cpp/container/vector_bool */
-      st = SetMsgArg<uint8_t>(m, sig.c_str(), val.ToUInt8Array());
-    break;
-
-    case adapter::TypeId::UInt8Array:
-      st = SetMsgArg<uint8_t>(m, sig.c_str(), val.ToUInt8Array());
-    break;
-
-    case adapter::TypeId::Int16Array:
-      st = SetMsgArg<int16_t>(m, sig.c_str(), val.ToInt16Array());
-    break;
-
-    case adapter::TypeId::UInt16Array:
-      st = SetMsgArg<uint16_t>(m, sig.c_str(), val.ToUInt16Array());
-    break;
-
-    case adapter::TypeId::Int32Array:
-      st = SetMsgArg<int32_t>(m, sig.c_str(), val.ToInt32Array());
-    break;
-
-    case adapter::TypeId::UInt32Array:
-      st = SetMsgArg<uint32_t>(m, sig.c_str(), val.ToUInt32Array());
-    break;
-
-    case adapter::TypeId::Int64Array:
-      st = SetMsgArg<int64_t>(m, sig.c_str(), val.ToInt64Array());
-    break;
-
-    case adapter::TypeId::UInt64Array:
-      st = SetMsgArg<uint64_t>(m, sig.c_str(), val.ToUInt64Array());
-    break;
-
-    case adapter::TypeId::DoubleArray:
-      st = SetMsgArg<double>(m, sig.c_str(), val.ToDoubleArray());
-    break;
-
-    case adapter::TypeId::StringArray:
-      st = SetMsgArg<std::string>(m, sig.c_str(), val.ToStringArray());
-    break;
+    T val;
+    QStatus st = m.Get(sig.c_str(), &val);
+    if (st == ER_OK)
+      v = val;
+    return st;
   }
-
-  return st;
 }
+
 
 template<>
 QStatus bridge::AllJoynHelper::SetMsgArg(ajn::MsgArg& msg, std::string const& sig, std::vector<std::string> const& arr)
@@ -206,13 +78,14 @@ QStatus bridge::AllJoynHelper::SetMsgArg(ajn::MsgArg& msg, std::string const& si
   {
     int n = static_cast<int>(arr.size());
 
-    typedef char const* value_type;
-    value_type* p = new value_type[n];
+    std::vector<char const *> ptrs;
+    ptrs.reserve(arr.size());
+    ptrs.resize(arr.size());
 
     for (int i = 0; i < n; ++i)
-      p[i] = arr[i].c_str();
+      ptrs[i] = arr[i].c_str();
 
-    st = msg.Set(sig.c_str(), n, p);
+    st = msg.Set(sig.c_str(), n, &ptrs[0]);
     msg.Stabilize();
   }
   else
@@ -223,106 +96,41 @@ QStatus bridge::AllJoynHelper::SetMsgArg(ajn::MsgArg& msg, std::string const& si
 
   return st;
 }
-   
+
+#if 0
 QStatus
-bridge::AllJoynHelper::SetMsgArgFromAdapterObject(adapter::Value const& adapterValue, ajn::MsgArg&)
+bridge::AllJoynHelper::SetMsgArgFromAdapterObject(adapter::NamedValue const& adapterValue, ajn::MsgArg&)
 {
   // TODO:
   QStatus st = ER_OK;
-  adapter::Variant const& val = adapterValue.GetValue();
+  adapter::Value const& val = adapterValue.GetValue();
   QCC_UNUSED(val);
   // std::string path = deviceMain->GetBusObjectPath(adapterValue);
-
   return st;
 }
+#endif
 
 QStatus
-bridge::AllJoynHelper::GetValue(adapter::Value& v, ajn::MsgArg const& msg)
+bridge::AllJoynHelper::MsgArgToValue(ajn::MsgArg const& m, adapter::Value& v)
 {
-  QStatus                 st;
-  std::string const sig = ajn::MsgArg::Signature(&msg, 1).c_str();
+  QStatus st = ER_OK;
+  std::string const sig = ajn::MsgArg::Signature(&m, 1).c_str();
 
   auto itr = s_signatureToType.find(sig);
   DSB_ASSERT(itr != s_signatureToType.end());
 
-  adapter::TypeId type = itr->second;
-
-  switch (type)
+  switch (itr->second)
   {
-    case adapter::TypeId::Null:
-    break;
-
-    case adapter::TypeId::Boolean:
-    {
-      bool b;
-      if ((st = msg.Get(sig.c_str(), &b)) == ER_OK)
-        v.SetValue(b);
-    }
-    break;
-
-    case adapter::TypeId::Int16:
-    {
-      int16_t i;
-      if ((st = msg.Get(sig.c_str(), &i)) == ER_OK)
-        v.SetValue(i);
-    }
-    break;
-
-    case adapter::TypeId::UInt16:
-    {
-      uint16_t u;
-      if ((st = msg.Get(sig.c_str(), &u)) == ER_OK)
-        v.SetValue(u);
-    }
-    break;
-
-    case adapter::TypeId::Int32:
-    {
-      int32_t i;
-      if ((st = msg.Get(sig.c_str(), &i)) == ER_OK)
-        v.SetValue(i);
-    }
-    break;
-
-    case adapter::TypeId::UInt32:
-    {
-      uint32_t u;
-      if ((st = msg.Get(sig.c_str(), &u)) == ER_OK)
-        v.SetValue(u);
-    }
-    break;
-
-    case adapter::TypeId::Int64:
-    {
-      int64_t l;
-      if ((st = msg.Get(sig.c_str(), &l)) == ER_OK)
-        v.SetValue(l);
-    }
-    break;
-
-    case adapter::TypeId::UInt64:
-    {
-      uint64_t lu;
-      if ((st = msg.Get(sig.c_str(), &lu)) == ER_OK)
-        v.SetValue(lu);
-    }
-    break;
-
-    case adapter::TypeId::Double:
-    {
-      double d;
-      if ((st = msg.Get(sig.c_str(), &d)) == ER_OK)
-        v.SetValue(d);
-    }
-    break;
-
-    case adapter::TypeId::String:
-    {
-      char* s = nullptr;
-      if ((st = msg.Get(sig.c_str(), &s)) == ER_OK)
-        v.SetValue(s);
-    }
-    break;
+    case adapter::TypeId::Null:    st = ER_OK; break;
+    case adapter::TypeId::Boolean: st = Extract<bool>(m, sig, v); break;
+    case adapter::TypeId::Int16:   st = Extract<int16_t>(m, sig, v); break;
+    case adapter::TypeId::UInt16:  st = Extract<uint16_t>(m, sig, v); break;
+    case adapter::TypeId::Int32:   st = Extract<int32_t>(m, sig, v); break;
+    case adapter::TypeId::UInt32:  st = Extract<uint32_t>(m, sig, v); break;
+    case adapter::TypeId::Int64:   st = Extract<int64_t>(m, sig, v); break;
+    case adapter::TypeId::UInt64:  st = Extract<uint64_t>(m, sig, v); break;
+    case adapter::TypeId::Double:  st = Extract<double>(m, sig, v); break;
+    case adapter::TypeId::String:  st = Extract<char *>(m, sig, v); break;
 
     // TODO: arrays
 
@@ -332,12 +140,6 @@ bridge::AllJoynHelper::GetValue(adapter::Value& v, ajn::MsgArg const& msg)
   }
 
   return st;
-}
-
-QStatus
-bridge::AllJoynHelper::GetAdapterObject(adapter::Value&, ajn::MsgArg const&)
-{
-  return ER_NOT_IMPLEMENTED;
 }
 
 std::string
@@ -478,4 +280,176 @@ bridge::AllJoynHelper::TrimChar(std::string const& s, char c)
   // TODO: error/bounds check
 
   return s.substr(left, right - left + 1);
+}
+
+QStatus
+bridge::AllJoynHelper::ValueToMsgArg(adapter::Value const& val, ajn::MsgArg& m)
+{
+  QStatus st = ER_OK;
+
+  std::string const sig = GetSignature(val.GetType());
+
+  switch (val.GetType())
+  {
+    case adapter::TypeId::Null:
+    break;
+
+    case adapter::TypeId::Boolean:
+    {
+      bool b = val.ToBoolean();
+      st = m.Set(sig.c_str(), &b);
+    }
+    break;
+
+    case adapter::TypeId::UInt8:
+    {
+      uint8_t i = val.ToUInt8();
+      st = m.Set(sig.c_str(), &i);
+    }
+    break;
+
+    case adapter::TypeId::Int16:
+    {
+      int16_t i = val.ToInt16();
+      st = m.Set(sig.c_str(), &i);
+    }
+    break;
+
+    case adapter::TypeId::UInt16:
+    {
+      uint16_t u = val.ToUInt16();
+      st = m.Set(sig.c_str(), &u);
+    }
+    break;
+
+    case adapter::TypeId::Int32:
+    {
+      int32_t i = val.ToInt32();
+      st = m.Set(sig.c_str(), &i);
+    }
+    break;
+
+    case adapter::TypeId::UInt32:
+    {
+      uint32_t u = val.ToUInt32();
+      st = m.Set(sig.c_str(), &u);
+    }
+    break;
+
+    case adapter::TypeId::Int64:
+    {
+      int64_t l = val.ToInt64();
+      st = m.Set(sig.c_str(), &l);
+    }
+    break;
+
+    case adapter::TypeId::UInt64:
+    {
+      uint64_t l = val.ToUInt64();
+      st = m.Set(sig.c_str(), &l);
+    }
+    break;
+
+    case adapter::TypeId::Double:
+    {
+      double d = val.ToDouble();
+      st = m.Set(sig.c_str(), &d);
+    }
+    break;
+
+    case adapter::TypeId::String:
+    {
+      std::string s = val.ToString();
+      if (!s.empty())
+      {
+        st = m.Set(sig.c_str(), s.c_str());
+        if (st == ER_OK)
+          m.Stabilize();
+      }
+      else
+      {
+        st = m.Set(sig.c_str(), "");
+      }
+    }
+    break;
+
+    case adapter::TypeId::BooleanArray:
+      /* Using vector<uint8_t> instead of vector<bool>, since vector<bool> is a
+       * bitfield and we can't access the underlying array easily.
+       * http://en.cppreference.com/w/cpp/container/vector_bool */
+      st = SetMsgArg<uint8_t>(m, sig.c_str(), val.ToUInt8Array());
+    break;
+
+    case adapter::TypeId::UInt8Array:
+      st = SetMsgArg<uint8_t>(m, sig.c_str(), val.ToUInt8Array());
+    break;
+
+    case adapter::TypeId::Int16Array:
+      st = SetMsgArg<int16_t>(m, sig.c_str(), val.ToInt16Array());
+    break;
+
+    case adapter::TypeId::UInt16Array:
+      st = SetMsgArg<uint16_t>(m, sig.c_str(), val.ToUInt16Array());
+    break;
+
+    case adapter::TypeId::Int32Array:
+      st = SetMsgArg<int32_t>(m, sig.c_str(), val.ToInt32Array());
+    break;
+
+    case adapter::TypeId::UInt32Array:
+      st = SetMsgArg<uint32_t>(m, sig.c_str(), val.ToUInt32Array());
+    break;
+
+    case adapter::TypeId::Int64Array:
+      st = SetMsgArg<int64_t>(m, sig.c_str(), val.ToInt64Array());
+    break;
+
+    case adapter::TypeId::UInt64Array:
+      st = SetMsgArg<uint64_t>(m, sig.c_str(), val.ToUInt64Array());
+    break;
+
+    case adapter::TypeId::DoubleArray:
+      st = SetMsgArg<double>(m, sig.c_str(), val.ToDoubleArray());
+    break;
+
+    case adapter::TypeId::StringArray:
+      st = SetMsgArg<std::string>(m, sig.c_str(), val.ToStringArray());
+    break;
+  }
+
+  return st;
+}
+
+std::string
+bridge::AllJoynHelper::GetSignature(adapter::NamedValue::Vector const& v)
+{
+  // TODO:
+  std::stringstream buff;
+  for (auto arg : v)
+  {
+    buff << AllJoynHelper::GetSignature(arg.GetValue().GetType());
+  }
+  return buff.str();
+}
+
+std::string
+bridge::AllJoynHelper::GetMethodArgumentNames(adapter::NamedValue::Vector const& in, adapter::NamedValue::Vector const& out)
+{
+  int i = 0;
+
+  std::stringstream buff;
+  for (auto arg : in)
+  {
+    if (i++ != 0)
+      buff << ",";
+    buff << arg.GetName();
+  }
+
+  for (auto arg : out)
+  {
+    if (i++ != 0)
+      buff << ",";
+    buff << arg.GetName();
+  }
+  return buff.str();
 }

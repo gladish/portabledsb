@@ -1,48 +1,48 @@
 #pragma once
 
-#include "Common/Variant.h"
+#include "Common/Value.h"
 
 #include <memory>
 #include <vector>
 
 namespace adapter
 {
-  class Value
+  class NamedValue
   {
   public:
-    typedef std::vector<Value> Vector;
+    typedef std::vector<NamedValue> Vector;
 
-    Value()
+    NamedValue()
     {
     }
 
-    Value(std::string const& name, Variant const& value)
+    NamedValue(std::string const& name, Value const& value)
       : m_name(name)
       , m_value(value) { }
 
     std::string const& GetName() const
       { return m_name; }
 
-    Variant const& GetValue() const
+    Value const& GetValue() const
       { return m_value; }
 
     void SetName(std::string const& name)
       { m_name = name; }
 
-    void SetValue(Variant const& value)
+    void SetValue(Value const& value)
       { m_value = value; }
 
     bool IsNull() const
       { return m_name.empty() && m_value.IsEmpty(); }
 
-    static Value const& Null()
+    static NamedValue const& Null()
     {
-      static Value kNullValue("", Variant());
+      static NamedValue kNullValue("", Value());
       return kNullValue;
     }
 
   private:
     std::string   m_name;
-    Variant       m_value;
+    Value       m_value;
   };
 }

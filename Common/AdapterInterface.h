@@ -6,6 +6,7 @@
 #include "Common/AdapterSignal.h"
 
 #include <algorithm>
+#include <list>
 #include <vector>
 
 namespace adapter
@@ -18,6 +19,12 @@ namespace adapter
     Interface(std::string const& name)
       : adapter::Object(name)
     {
+    }
+
+    static std::list< std::shared_ptr<Interface> > FromFile(std::string const& file)
+    {
+      // TODO:
+      return std::list< std::shared_ptr<Interface> >();
     }
 
     Property::Vector const& GetProperties() const
@@ -48,6 +55,19 @@ namespace adapter
 
     Method::Vector const& GetMethods() const
       { return m_methods; }
+
+    Method const* GetMethod(char const* name) const
+    {
+      Method const* method = nullptr;
+
+      auto itr = std::find_if(m_methods.begin(), m_methods.end(),
+        [&name](Method const& m) { return strcmp(m.GetName().c_str(), name) == 0; });
+
+      if (itr != m_methods.end())
+        method = &(*itr);
+
+      return method;
+    }
 
     void ClearMethods()
       { m_methods.clear(); }

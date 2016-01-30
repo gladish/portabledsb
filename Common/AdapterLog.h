@@ -36,7 +36,7 @@ namespace adapter
 
     void VaLog(LogLevel level, const char* file, int line, const char* format, va_list args);
 
-    bool IsLevelEnabled(std::string const& module, LogLevel level);
+    bool IsLevelEnabled(LogLevel level);
 
     std::string const& GetName() const
       { return m_name; }
@@ -58,9 +58,11 @@ namespace adapter
         log->Write(LEVEL, __FILE__, __LINE__, FORMAT, ##__VA_ARGS__); \
     } } while (0)
 
+#define DSBLOG_LEVEL_ENABLED(LEVEL) adapter::Log::GetLog(__dsb_logger_module_name__)->IsLevelEnabled(adapter::LogLevel::LEVEL)
+
 #define DSBLOG(LEVEL, NAME, FORMAT, ...) \
     do { std::shared_ptr<adapter::Log> log = adapter::Log::GetLog(NAME); \
-      if (log->IsLevelEnabled(NAME, adapter::LogLevel::LEVEL)) { \
+      if (log->IsLevelEnabled(adapter::LogLevel::LEVEL)) { \
         log->Write(adapter::LogLevel::LEVEL, __FILE__, __LINE__, FORMAT, ##__VA_ARGS__); \
     } } while (0)
 

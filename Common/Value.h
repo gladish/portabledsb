@@ -12,41 +12,41 @@
 
 namespace adapter 
 {
-  class Variant
+  class Value
   {
   public:
 
-    Variant();
-    Variant(bool b);
-    Variant(uint8_t y);
-    Variant(int16_t n);
-    Variant(uint16_t q);
-    Variant(int32_t i);
-    Variant(uint32_t u);
-    Variant(int64_t x);
-    Variant(uint64_t t);
-    Variant(double d);
-    Variant(TypeId typeId);
-    Variant(char const* s);
-    Variant(std::string const& s);
-    Variant(Variant const& other);
+    Value();
+    Value(bool b);
+    Value(uint8_t y);
+    Value(int16_t n);
+    Value(uint16_t q);
+    Value(int32_t i);
+    Value(uint32_t u);
+    Value(int64_t x);
+    Value(uint64_t t);
+    Value(double d);
+    Value(TypeId typeId);
+    Value(char const* s);
+    Value(std::string const& s);
+    Value(Value const& other);
 
-    Variant(std::vector<bool> const& v);
-    Variant(std::vector<uint8_t> const& v);
-    Variant(std::vector<int16_t> const& v);
-    Variant(std::vector<uint16_t> const& v);
-    Variant(std::vector<int32_t> const& v);
-    Variant(std::vector<uint32_t> const& v);
-    Variant(std::vector<int64_t> const& v);
-    Variant(std::vector<uint64_t> const& v);
-    Variant(std::vector<double> const& v);
-    Variant(std::vector<std::string> const& v);
+    Value(std::vector<bool> const& v);
+    Value(std::vector<uint8_t> const& v);
+    Value(std::vector<int16_t> const& v);
+    Value(std::vector<uint16_t> const& v);
+    Value(std::vector<int32_t> const& v);
+    Value(std::vector<uint32_t> const& v);
+    Value(std::vector<int64_t> const& v);
+    Value(std::vector<uint64_t> const& v);
+    Value(std::vector<double> const& v);
+    Value(std::vector<std::string> const& v);
 
-    Variant& operator=(Variant const& other);
+    Value& operator=(Value const& other);
 
-    ~Variant();
+    ~Value();
 
-    bool operator < (Variant const& rhs) const;
+    bool operator < (Value const& rhs) const;
     // inline bool operator!=(const X& lhs, const X& rhs){return !operator==(lhs,rhs);}
     // inline bool operator==(const X& lhs, const X& rhs){ /* do actual comparison */ }
 
@@ -102,7 +102,7 @@ namespace adapter
 
     bool CanConvert(TypeId t) const;
 
-    friend std::ostream& operator << (std::ostream& os, Variant const& v);
+    friend std::ostream& operator << (std::ostream& os, Value const& v);
 
   private:
     template<class T>
@@ -196,7 +196,7 @@ namespace adapter
 
     Data m_data;
 
-    void AssignFrom(Variant const& other);
+    void AssignFrom(Value const& other);
 
     template<class T>
     void AssignFromArray(Data& to, Data const& from)
@@ -217,7 +217,7 @@ namespace adapter
     }
 
     template<class T>
-    void AllocAndCopy(adapter::Variant::Data& d, std::vector<T> const& v)
+    void AllocAndCopy(adapter::Value::Data& d, std::vector<T> const& v)
     {
       d.Size = static_cast<int>(v.size());
       if (d.Size > 0)
@@ -240,7 +240,7 @@ namespace adapter
   };
 }
 
-inline std::ostream& operator << (std::ostream& os, adapter::Variant const& v)
+inline std::ostream& operator << (std::ostream& os, adapter::Value const& v)
 {
   os << v.ToString();
   return os;

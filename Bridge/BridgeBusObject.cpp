@@ -36,67 +36,6 @@ namespace
     return ret;
   }
 
-  ajn::InterfaceDescription const* BuildInterface(ajn::BusAttachment& bus, adapter::Interface const& interface)
-  {
-    QStatus st = ER_OK;
-    ajn::InterfaceDescription* intf = nullptr;
-
-    std::string ifcName = interface.GetName().c_str();
-
-    {
-      auto itr = s_interfaceCache.find(ifcName);
-      if (itr == s_interfaceCache.end())
-      {
-        s_interfaceCache.insert(InterfaceCache::value_type(
-          ifcName, std::shared_ptr<adapter::Interface>(new adapter::Interface(interface))));
-      }
-    }
-
-    // DSBLOG_DEBUG("looking for interface: %s", interface.GetName().c_str());
-    
-    st = bus.CreateInterface(interface.GetName().c_str(), intf, ajn::AJ_IFC_SECURITY_OFF);
-    bridge::Error::ThrowIfNotOk(st, "failed to create interface: %s", interface.GetName().c_str());
-
-    for (auto attr : interface.GetAttributes())
-    {
-      // DSBLOG_DEBUG("adding annotation to interface");
-      st = intf->AddAnnotation(attr.first.c_str(), attr.second.ToString().c_str());
-      bridge::Error::ThrowIfNotOk(st, "failed to add annotation to interface");
-    }
-
-    for (auto prop : interface.GetProperties())
-    {
-      char const* name = prop.GetName().c_str();
-      // DSBLOG_DEBUG("adding property to interface: %s", name);
-
-      std::string sig = bridge::AllJoynHelper::GetSignature(prop.GetType());
-
-      st = intf->AddProperty(name, sig.c_str(), GetAccess(prop));
-      bridge::Error::ThrowIfNotOk(st, "failed to add property %s to interface %s", name, ifcName.c_str());
-
-      for (auto attr : prop.GetAttributes())
-      {
-        st = intf->AddPropertyAnnotation(name, attr.first.c_str(), attr.second.ToString().c_str());
-        bridge::Error::ThrowIfNotOk(st, "failed to add annotation to property");
-      }
-    }
-
-    for (auto method : interface.GetMethods())
-    {
-      // TODO:
-    }
-
-    for (auto signal : interface.GetSignals())
-    {
-      // TODO:
-    }
-
-    if (intf != nullptr)
-      intf->Activate();
-
-    return bus.GetInterface(interface.GetName().c_str());
-  }
-
   // TODO: move this to some type of reconnecting BusAttachment
   // PersistentBusAttachment
   uint64_t                          reconnectRefcount = 0;
@@ -248,12 +187,26 @@ bridge::BusObject::Publish()
   {
     ajn::InterfaceDescription const* intf = m_bus->GetInterface(interface.GetName().c_str());
     if (intf == nullptr)
-      intf = BuildInterface(*m_bus.get(), interface);
+      intf = BuildInterface(interface);
 
     if (intf != nullptr)
     {
       // DSBLOG_DEBUG("activating interface: %s", interface.GetName().c_str());
       ajn::BusObject::AddInterface(*intf, ajn::BusObject::ANNOUNCED);
+
+      for (auto method : interface.GetMethods())
+      {
+        char const* name = method.GetName().c_str();
+
+        // register method handler
+        ajn::InterfaceDescription::Member const* member = intf->GetMember(name);
+        if (member != nullptr)
+        {
+          // TODO: how to get rid of this cast?
+          QStatus st = AddMethodHandler(member, static_cast<MessageReceiver::MethodHandler>(&BusObject::MethodHandler), this);
+          Error::ThrowIfNotOk(st, "failed to register method handler for %s", name);
+        }
+      }
     }
   }
 
@@ -323,11 +276,8 @@ bridge::BusObject::AnnounceAndRegister()
 }
 
 
-// yes just testing
-static ajn::MsgArg s_val("s", "This is the default description");
-
 QStatus
-bridge::BusObject::Get(char const* interface, char const* property, ajn::MsgArg &val)
+bridge::BusObject::Get(char const* interface, char const* property, ajn::MsgArg& arg)
 {
   std::string ifc = interface;
   auto itr = s_interfaceCache.find(ifc);
@@ -342,20 +292,19 @@ bridge::BusObject::Get(char const* interface, char const* property, ajn::MsgArg 
   adapter::Property const*  adapterProperty = adapterInterface.GetProperty(property);
   adapter::Value            adapterValue;
   adapter::IoRequest::Pointer adapterRequest;
-  adapter::Status st = m_adapter->GetProperty(adapterInterface, *adapterProperty,
+  adapter::Status st = m_adapter->GetProperty(m_adapterDevice, adapterInterface, *adapterProperty,
       adapterValue, adapterRequest);
 
   if (st == 0)
   {
-    AllJoynHelper::SetMsgArg(adapterValue, val);
-    printf("ValueType: %d\n", adapterValue.GetValue().GetType());
+    AllJoynHelper::ValueToMsgArg(adapterValue, arg);
   }
 
   return ER_OK;
 }
 
 QStatus
-bridge::BusObject::Set(char const* interface, char const* property, ajn::MsgArg &val)
+bridge::BusObject::Set(char const* interface, char const* property, ajn::MsgArg& msg)
 {
   std::string ifc = interface;
   auto itr = s_interfaceCache.find(ifc);
@@ -367,12 +316,11 @@ bridge::BusObject::Set(char const* interface, char const* property, ajn::MsgArg 
 
   adapter::Interface const&   adapterInterface = *(itr->second);
   adapter::Property const*    adapterProperty = adapterInterface.GetProperty(property);
-
-  adapter::Value              adapterValue(property, 0);
-  AllJoynHelper::GetValue(adapterValue, val);
+  adapter::Value              adapterValue;
+  AllJoynHelper::MsgArgToValue(msg, adapterValue);
 
   adapter::IoRequest::Pointer adapterRequest;
-  adapter::Status st = m_adapter->SetProperty(adapterInterface, *adapterProperty,
+  adapter::Status st = m_adapter->SetProperty(m_adapterDevice, adapterInterface, *adapterProperty,
     adapterValue, adapterRequest);
 
   if (st != 0)
@@ -434,3 +382,147 @@ bridge::BusObject::BusListener::BusDisconnected()
   reconnectCond.notify_one();
 }
 
+void
+bridge::BusObject::MethodHandler(ajn::InterfaceDescription::Member const* member, ajn::Message& msg)
+{
+  if (!member)
+    return;
+
+  if (DSBLOG_LEVEL_ENABLED(Debug))
+  {
+    DSBLOG_DEBUG("MethodHandler\n"
+      "\tsignature : '%s'\n"
+      "\txml       : \n%s\n",
+      msg->GetSignature(),
+      msg->ToString().c_str());
+  }
+
+  std::string ifc = member->iface->GetName();
+  auto itr = s_interfaceCache.find(ifc);
+  if (itr == s_interfaceCache.end())
+  {
+    DSBLOG_ERROR("can't find interface %s in cache", ifc.c_str());
+    return;
+  }
+
+  adapter::Interface const&   adapterInterface = *(itr->second);
+  adapter::Method    const*   adapterMethod = adapterInterface.GetMethod(member->name.c_str());
+  adapter::IoRequest::Pointer adapterRequest;
+  adapter::Value              inarg;
+  adapter::Value              outarg;
+  adapter::Status st = m_adapter->InvokeMethod(m_adapterDevice, adapterInterface, *adapterMethod, inarg,
+      outarg, adapterRequest);
+
+  if (st == ER_OK)
+  {
+  }
+  else
+  {
+    DSBLOG_WARN("failed to invoke method: %s", m_adapter->GetStatusText(st).c_str());
+  }
+}
+
+void
+bridge::BusObject::AddPropertiesToInterface(adapter::Interface const& interface, ajn::InterfaceDescription& desc)
+{
+  for (auto prop : interface.GetProperties())
+  {
+    char const* name = prop.GetName().c_str();
+    // DSBLOG_DEBUG("adding property to interface: %s", name);
+
+    std::string sig = AllJoynHelper::GetSignature(prop.GetType());
+
+    QStatus st = desc.AddProperty(name, sig.c_str(), GetAccess(prop));
+    Error::ThrowIfNotOk(st, "failed to add property %s to interface %s", name,
+        desc.GetName());
+
+    for (auto attr : prop.GetAttributes())
+    {
+      st = desc.AddPropertyAnnotation(name, attr.first.c_str(), attr.second.ToString().c_str());
+      Error::ThrowIfNotOk(st, "failed to add annotation to property");
+    }
+  }
+}
+
+void
+bridge::BusObject::AddSignalsToInterface(adapter::Interface const& interface, ajn::InterfaceDescription& desc)
+{
+  for (adapter::Signal const& signal : interface.GetSignals())
+  {
+    std::string const sig = AllJoynHelper::GetSignature(signal.GetParameters());
+    char const* s = nullptr;
+    if (!sig.empty())
+      s = sig.c_str();
+
+    std::string const names = AllJoynHelper::GetMethodArgumentNames(signal.GetParameters());
+    char const* t = nullptr;
+    if (!names.empty())
+      t = names.c_str();
+
+    QStatus st = desc.AddSignal(signal.GetName().c_str(), s, t, 0, nullptr);
+    Error::ThrowIfNotOk(st, "failed to add signal");
+  }
+}
+
+void
+bridge::BusObject::AddMethodsToInterface(adapter::Interface const& interface, ajn::InterfaceDescription& desc)
+{
+  for (auto method : interface.GetMethods())
+  {
+    char const* name = method.GetName().c_str();
+
+    std::string osig = AllJoynHelper::GetSignature(method.GetOutputArguments());
+    char const* outsig = nullptr;
+    if (!osig.empty())
+      outsig = osig.c_str();
+
+    char const* insig = nullptr;
+    std::string isig = AllJoynHelper::GetSignature(method.GetInputArguments());
+    if (!isig.empty())
+      insig = isig.c_str();
+
+    std::string names = AllJoynHelper::GetMethodArgumentNames(method.GetInputArguments(),
+        method.GetOutputArguments());
+
+    QStatus st = desc.AddMethod(name, insig, outsig, names.c_str());
+    Error::ThrowIfNotOk(st, "failed to add method %s", name);
+  }
+}
+
+ajn::InterfaceDescription const*
+bridge::BusObject::BuildInterface(adapter::Interface const& interface)
+{
+  QStatus st = ER_OK;
+  ajn::InterfaceDescription* desc = nullptr;
+
+  std::string ifcName = interface.GetName().c_str();
+
+  {
+    auto itr = s_interfaceCache.find(ifcName);
+    if (itr == s_interfaceCache.end())
+    {
+      s_interfaceCache.insert(InterfaceCache::value_type(
+            ifcName, std::shared_ptr<adapter::Interface>(new adapter::Interface(interface))));
+    }
+  }
+
+  // DSBLOG_DEBUG("looking for interface: %s", interface.GetName().c_str());
+
+  st = m_bus->CreateInterface(interface.GetName().c_str(), desc, ajn::AJ_IFC_SECURITY_OFF);
+  Error::ThrowIfNotOk(st, "failed to create interface: %s", interface.GetName().c_str());
+
+  for (auto attr : interface.GetAttributes())
+  {
+    // DSBLOG_DEBUG("adding annotation to interface");
+    st = desc->AddAnnotation(attr.first.c_str(), attr.second.ToString().c_str());
+    Error::ThrowIfNotOk(st, "failed to add annotation to interface");
+  }
+
+  AddPropertiesToInterface(interface, *desc);
+  AddMethodsToInterface(interface, *desc);
+  AddSignalsToInterface(interface, *desc);
+
+  desc->Activate();
+
+  return m_bus->GetInterface(interface.GetName().c_str());
+}

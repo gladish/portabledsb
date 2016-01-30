@@ -1,5 +1,4 @@
-SRCS=DeviceProviders/AllJoynProvider.cpp \
-     DeviceProviders/AllJoynService.cpp \
+SRCS=\
      Bridge/AllJoynAbout.cpp \
      Bridge/AllJoynHelper.cpp \
      Bridge/Bridge.cpp \
@@ -7,10 +6,9 @@ SRCS=DeviceProviders/AllJoynProvider.cpp \
      Bridge/BridgeConfig.cpp \
      Bridge/ConfigManager.cpp \
      Common/AdapterLog.cpp \
-     Common/Variant.cpp \
+     Common/Value.cpp \
      Common/Guid.cpp \
      Adapters/MockAdapter/MockAdapter.cpp \
-     Adapters/MockAdapter/MockDevices.cpp \
      Adapters/MockAdapter/ZigBeeClusterDatabase.cpp \
      main.cpp
 

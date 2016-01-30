@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Common/AdapterObject.h"
-#include "Common/AdapterValue.h"
+#include "Common/AdapterNamedValue.h"
 
 #include <string>
 #include <vector>
@@ -25,10 +25,10 @@ namespace adapter
     std::string const& GetInterface() const
       { return m_interface; }
 
-    Value::Vector const& GetParameters() const
+    NamedValue::Vector const& GetParameters() const
       { return m_params; }
 
-    void AddParameter(Value const& value)
+    void AddParameter(NamedValue const& value)
       { m_params.push_back(value); }
 
     void ClearParameters()
@@ -40,11 +40,11 @@ namespace adapter
 
   private:
     std::string           m_interface;
-    Value::Vector  m_params;
+    NamedValue::Vector  m_params;
   };
 
   inline Signal MakeAdapterSignal(std::string const& name,
-    Value::Vector const& params = Value::Vector())
+    NamedValue::Vector const& params = NamedValue::Vector())
   {
     Signal signal(name);
     for (auto const& param : params)

@@ -64,28 +64,36 @@ namespace adapter
       IoRequest::Pointer const& req) = 0;
 
     virtual adapter::Status GetProperty(
+      Device const& device,
       Interface const& ifc,
       Property const& prop,
       Value& value,
       IoRequest::Pointer const& req) = 0;
 
     virtual adapter::Status SetProperty(
+      Device const& device,
       Interface const& ifc,
       Property const& prop,
       Value const& value,
       IoRequest::Pointer const& req) = 0;
 
     virtual adapter::Status InvokeMethod(
+      Device const& device,
       Interface const& ifc,
       Method const& method,
+      Value const& inarg,
+      Value& outarg,
       IoRequest::Pointer const& req) = 0;
 
     virtual adapter::Status RegisterSignalListener(
-        std::string const& signalName,
-        SignalListener const& listener,
-        void* argp,
-        RegistrationHandle& handle) = 0;
+      Device const& device,
+      Interface const& ifc,
+      Signal const& signal,
+      SignalListener const& listener,
+      void* argp,
+      adapter::RegistrationHandle& handle) = 0;
 
-    virtual adapter::Status UnregisterSignalListener(RegistrationHandle const& h) = 0;
+    virtual adapter::Status UnregisterSignalListener(
+      RegistrationHandle const& h) = 0;
   };
 }

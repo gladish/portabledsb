@@ -9,23 +9,13 @@ namespace adapters
 {
 namespace mock
 {
-  struct InterfaceDefinition
-  {
-    std::string                     Name;
-    adapter::Property::Vector Properties;
-    adapter::Method::Vector   Methods;
-    adapter::Signal::Vector   Signals;
-  };
-
-  std::shared_ptr<InterfaceDefinition> GetZigBeeCluster(uint16_t clusterId);
+  std::shared_ptr<adapter::Interface> GetZigBeeCluster(uint16_t clusterId);
 
   class MockAdapter : public adapter::Adapter, public std::enable_shared_from_this<adapter::Adapter>
   {
   public:
     MockAdapter();
     virtual ~MockAdapter();
-
-    static InterfaceDefinition GetZigbeeInterface(uint16_t clusterId);
 
     virtual adapter::ItemInformation const&
     GetInfo();
@@ -61,24 +51,31 @@ namespace mock
       std::shared_ptr<adapter::IoRequest> const& req);
 
     virtual adapter::Status GetProperty(
+      adapter::Device const& device,
       adapter::Interface const& ifc,
       adapter::Property const& prop,
       adapter::Value& value,
       std::shared_ptr<adapter::IoRequest> const& req);
 
     virtual adapter::Status SetProperty(
+      adapter::Device const& device,
       adapter::Interface const& ifc,
       adapter::Property const& prop, 
       adapter::Value const& value,
       std::shared_ptr<adapter::IoRequest> const& req);
 
     virtual adapter::Status InvokeMethod(
+      adapter::Device const& device,
       adapter::Interface const& ifc,
       adapter::Method const& method,
+      adapter::Value const& inarg,
+      adapter::Value& outarg,
       std::shared_ptr<adapter::IoRequest> const& req);
 
     virtual adapter::Status RegisterSignalListener(
-      std::string const& signalName,
+      adapter::Device const& device,
+      adapter::Interface const& ifc,
+      adapter::Signal const& signal,
       adapter::SignalListener const& listener,
       void* argp,
       adapter::RegistrationHandle& handle);
@@ -89,7 +86,6 @@ namespace mock
 
   private:
     void CreateMockDevices();
-    void CreateSignals();
 
     adapter::Device CreateDoorWindowSensor(std::string const& name);
 

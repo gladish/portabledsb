@@ -13,13 +13,26 @@ namespace
 {
   DSB_DECLARE_LOGNAME(MockAdapter);
   
-  adapter::RegistrationHandle nextHandle = 0;
-  adapter::RegistrationHandle GetNextRegistrationHandle()
+  std::map< uint64_t, adapter::Value > valueCache;
+
+  uint16_t GetAttributeId(adapter::Property const& p)
   {
-    return ++nextHandle;
+    adapter::Value v = p.GetAttribute("code");
+    return v.ToUInt16();
   }
 
-  std::map< uint64_t, adapter::Value > valueCache;
+  uint16_t GetClusterId(adapter::Interface const& i)
+  {
+    adapter::Value v = i.GetAttribute("code");
+    return v.ToUInt16();
+  }
+
+  void AddClusterToDevice(adapter::Device& dev, uint16_t clusterId)
+  {
+    std::shared_ptr<adapter::Interface> def = adapters::mock::GetZigBeeCluster(clusterId);
+    if (def)
+      dev.AddInterface(*def);
+  }
 }
 
 adapters::mock::MockAdapter::MockAdapter()
@@ -73,7 +86,6 @@ adapters::mock::MockAdapter::Initialize(
   m_log = log;
 
   CreateMockDevices();
-  CreateSignals();
 
   if (req)
     req->SetComplete(0);
@@ -114,6 +126,7 @@ adapters::mock::MockAdapter::EnumDevices(
 
 adapter::Status
 adapters::mock::MockAdapter::GetProperty(
+  adapter::Device const& device,
   adapter::Interface const& ifc,
   adapter::Property const& prop,
   adapter::Value& value,
@@ -128,16 +141,16 @@ adapters::mock::MockAdapter::GetProperty(
   }
   else
   {
-    adapter::Variant v = prop.GetAttribute("default");
+    adapter::Value v = prop.GetAttribute("default");
     if (!v.IsEmpty())
     {
-      value = adapter::Value(prop.GetName(), v);
+      value = v;
     }
     else
     {
       // use default for type
       adapter::TypeId type = prop.GetType();
-      value = adapter::Value(prop.GetName(), adapter::Variant(type));
+      value = adapter::Value(adapter::Value(type));
     }
   }
 
@@ -149,12 +162,19 @@ adapters::mock::MockAdapter::GetProperty(
 
 adapter::Status
 adapters::mock::MockAdapter::SetProperty(
+  adapter::Device const& device,
   adapter::Interface const& ifc,
   adapter::Property const& prop,
   adapter::Value const& value,
   std::shared_ptr<adapter::IoRequest> const& req)
 {
   DSBLOG_INFO("SetProperty %s, %s", ifc.GetName().c_str(), prop.GetName().c_str());
+
+  // you put this in during the modeling phase
+  uint16_t clusterId = GetClusterId(ifc);
+  uint16_t attrId = GetAttributeId(prop);
+
+  DSBLOG_INFO("set cluster:0x%02x attr:0x%02x", clusterId, attrId);
 
   // TODO: I think we make the bridge do the type checking, but the adapter would
   // have to do range checking
@@ -168,21 +188,26 @@ adapters::mock::MockAdapter::SetProperty(
 
 adapter::Status
 adapters::mock::MockAdapter::InvokeMethod(
+  adapter::Device const& device,
   adapter::Interface const& ifc,
   adapter::Method const& method,
+  adapter::Value const& inarg,
+  adapter::Value& ourarg,
   std::shared_ptr<adapter::IoRequest> const& req)
 {
-  DSBLOG_ASSERT_NOT_IMPLEMENTED();
+  DSBLOG_INFO("TODO: InvokeMethod: %s.%s", ifc.GetName().c_str(), method.GetName().c_str());
   return 0;
 }
 
 
 adapter::Status
 adapters::mock::MockAdapter::RegisterSignalListener(
-    std::string const& signalName,
-    adapter::SignalListener const& listener,
-    void* argp,
-    adapter::RegistrationHandle& handle)
+  adapter::Device const& device,
+  adapter::Interface const& interface,
+  adapter::Signal const& signal,
+  adapter::SignalListener const& listener,
+  void* argp,
+  adapter::RegistrationHandle& handle)
 {
   DSBLOG_ASSERT_NOT_IMPLEMENTED();
 #if 0
@@ -221,59 +246,6 @@ adapters::mock::MockAdapter::CreateMockDevices()
   m_devices.push_back(MockAdapter::CreateDoorWindowSensor("FrontDoor"));
   m_devices.push_back(MockAdapter::CreateDoorWindowSensor("SideDoor"));
   m_devices.push_back(MockAdapter::CreateDoorWindowSensor("RearDoor"));
-
-#if 0
-  std::shared_ptr<MockAdapter> self = std::dynamic_pointer_cast<MockAdapter>(shared_from_this());
-
-  typedef std::vector<adapters::mock::MockDeviceDescriptor> vector;
-
-  vector devices = adapters::mock::GetMockDevices();
-  for (vector::const_iterator begin = devices.begin(), end = devices.end();
-    begin != end; ++begin)
-  {
-    std::shared_ptr<MockAdapterDevice> dev = MockAdapterDevice::Create(*begin, self);
-    m_devices.push_back(dev);
-  }
-#endif
-}
-
-void
-adapters::mock::MockAdapter::CreateSignals()
-{
-  DSBLOG_NOT_IMPLEMENTED();
-#if 0
-  std::shared_ptr<MockAdapterDevice> parent;
-
-  adapter::Value::Vector values;
-
-  // TODO
-  // std::shared_ptr<MockAdapterValue> val(new MockAdapterValue(bridge::kDeviceArravalHandle));
-  // std::shared_ptr<MockterSignal> signal(new MockAdapterSignal(bridge::kDeviceArrivalSignal,
-  //   parent, values));
-  // m_signals.push_back(signal);
-#endif
-}
-
-adapter::Status
-adapters::mock::MockAdapter::NotifySignalListeners(adapter::Signal const& signal)
-{
-#if 0
-  adapter::Status st = 1;
-  if (!signal)
-    return st;
-
-  std::pair< SignalMap::iterator, SignalMap::iterator > range = 
-    m_signalListeners.equal_range(signal->GetName());
-
-  for (SignalMap::iterator begin = range.first, end = range.second; begin != end; ++begin)
-  {
-    RegisteredSignal& handler = begin->second;
-    handler.Listener->AdapterSignalHandler(*signal, handler.Context);
-  }
-
-  return st;
-  #endif
-  return 0;
 }
 
 std::string
@@ -316,3 +288,23 @@ adapters::mock::MockAdapter::SetConfiguration(
   return 0;
 }
 
+adapter::Device
+adapters::mock::MockAdapter::CreateDoorWindowSensor(std::string const& name)
+{
+  adapter::ItemInformation info;
+  info.SetName(name);
+  info.SetVendor("Comcast");
+  info.SetModel("801417");
+  info.SetVersion("1.0");
+  info.SetFirmwareVersion("1.0");
+  info.SetSerialNumber("H123ALK");
+  info.SetDescription("Door/Window sensor");
+
+  adapter::Device dev;
+  dev.SetBasicInfo(info);
+
+  AddClusterToDevice(dev, 0x0000); // basic
+  AddClusterToDevice(dev, 0x000f); // binary input
+
+  return std::move(dev);
+}

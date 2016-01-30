@@ -2,7 +2,7 @@
 #include "Bridge/BridgeError.h"
 #include "Bridge/BridgeBusObject.h"
 
-#include "Common/AdapterValue.h"
+#include "Common/AdapterNamedValue.h"
 #include "Common/EnumDeviceOptions.h"
 #include "Common/AdapterLog.h"
 
@@ -132,8 +132,7 @@ bridge::Bridge::InitializeInternal()
   Error::ThrowIfNotOk(st, "error connecting to router");
 
   DSBLOG_INFO("initialize devices");
-  st = InitializeDevices();
-  Error::ThrowIfNotOk(st, "initialize devices failed");
+  InitializeDevices();
 
   DSBLOG_INFO("registering signal handlers");
   st = RegisterAdapterSignalHandlers(true);
@@ -192,7 +191,7 @@ bridge::Bridge::InitializeAdapter()
   }
 }
 
-QStatus
+void
 bridge::Bridge::InitializeDevices(bool update)
 {
   adapter::EnumDeviceOptions opts = adapter::EnumDeviceOptions::CacheOnly;
@@ -210,10 +209,7 @@ bridge::Bridge::InitializeDevices(bool update)
     Error::Throw(*m_adapter, st, "failed to enumerate devices");
 
   if (!req->Wait(kWaitTimeoutForAdapterOperation))
-  {
-    DSBLOG_WARN("timeout waiting for async i/o request");
-    return ER_FAIL;
-  }
+    Error::Throw("timeout waiting for adapter to initialize");
 
   for (auto device : devices)
   {
@@ -225,8 +221,6 @@ bridge::Bridge::InitializeDevices(bool update)
   }
 
   // TODO: Save bridge configuration to XML
-
-  return ER_OK;
 }
 
 void
@@ -309,28 +303,11 @@ bridge::Bridge::RegisterAdapterSignalHandlers(bool isRegister)
   return st;
 }
 
-QStatus
+void
 bridge::Bridge::UpdateDevice(adapter::Device const& dev, bool exposedOnAllJoynBus)
 {
-  QStatus st = ER_OK;
-
   DSBLOG_NOT_IMPLEMENTED();
-
-  #if 0
-  BridgeDeviceList::const_iterator itr = m_deviceList.find(GetKey(dev));
-  if (itr == m_deviceList.end() && exposedOnAllJoynBus)
-  {
-    CreateDevice(dev);
-  }
-  else if (itr != m_deviceList.end() && !exposedOnAllJoynBus)
-  {
-    m_deviceList.erase(itr);
-    if ((st = itr->second->Shutdown()) != ER_OK)
-      DSBLOG_WARN("failed to shutdown BridgeDevice: %s", QCC_StatusText(st));
-  }
-  #endif
-
-  return st;
+  DSBLOG_ASSERT_NOT_IMPLEMENTED();
 }
 
 void

@@ -4,7 +4,7 @@
 #include <string>
 
 #include "Common/AdapterObject.h"
-#include "Common/AdapterValue.h"
+#include "Common/AdapterNamedValue.h"
 #include "Common/AccessType.h"
 #include "Common/SignalBehavior.h"
 #include "Common/TypeId.h"
@@ -57,7 +57,7 @@ namespace adapter
   };
 
   inline Property MakeProperty(std::string const& name, TypeId type,
-    AccessType access, Value::Vector const& attrs = Value::Vector())
+    AccessType access, NamedValue::Vector const& attrs = NamedValue::Vector())
   {
     Property prop(name, type, access);
     for (auto const& attr : attrs)
