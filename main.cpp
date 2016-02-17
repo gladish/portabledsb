@@ -1,12 +1,30 @@
+//
+// Copyright (c) 2016, Comcast Cable Communications Management, LLC
+//
+// Permission to use, copy, modify, and/or distribute this software for any purpose with or
+// without fee is hereby granted, provided that the above copyright notice and this
+// permission notice appear in all copies.
+//
+// THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH REGARD TO
+// THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT
+// SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR
+// ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION
+// OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE
+// USE OR PERFORMANCE OF THIS SOFTWARE.
+//
+#include "bridge/Bridge.h"
+#include "common/Adapter.h"
+#include "common/AdapterLoader.h"
+#include "common/AdapterLog.h"
 
-#include "Bridge/Bridge.h"
+#include <getopt.h>
 
-#include "Common/Adapter.h"
-#include "Common/AdapterLog.h"
-
-#include "Adapters/MockAdapter/MockAdapter.h"
-
-#include <iostream>
+static option longOptions[] =
+{
+  { "adapter", required_argument, 0, 'a' },
+  { "config",  required_argument, 0, 'c' },
+  { 0, 0, 0, 0 }
+};
 
 namespace
 {
@@ -83,8 +101,41 @@ namespace
   }
 }
 
-int main(int /*argc*/, char* /*argv*/ [])
+int main(int argc, char* argv[])
 {
+  #if 0
+  std::cout << "size adapter::Device : " << sizeof(adapter::Device) << std::endl;
+  std::cout << "size adapter::Method : " << sizeof(adapter::Method) << std::endl;
+  std::cout << "size adapter::Prop   : " << sizeof(adapter::Property) << std::endl;
+  std::cout << "size adpater::Intf   : " << sizeof(adapter::Interface) << std::endl;
+  std::cout << "size std::string     : " << sizeof(std::string) << std::endl;
+  std::cout << "size adapter::Guid   : " << sizeof(adapter::Guid) << std::endl;
+  std::cout << "size string map<>    : " << sizeof(std::map<std::string, std::string>) << std::endl;
+  #endif
+
+  int optionIndex = 0;
+  char const* adapterName = nullptr;
+  char const* configFile = "alljoyndsb.xml";
+
+  while (true)
+  {
+    int c = getopt_long(argc, argv, "a:c:", longOptions, &optionIndex);
+    if (c == -1)
+      break;
+
+    switch (c)
+    {
+      case 'a':
+        adapterName = optarg;
+        break;
+      case 'c':
+        configFile = optarg;
+        break;
+      default:
+        return 0;
+    }
+  }
+
   #if 0
   bridge::bridgeConfig config;
   config.FromFile("/some/file.xml");
@@ -116,9 +167,28 @@ int main(int /*argc*/, char* /*argv*/ [])
   #endif
   adapter::Log::SetDefaultLevel(adapter::LogLevel::Debug);
 
-  bridge::Bridge::InitializeSingleton(std::shared_ptr<adapter::Adapter>(new adapters::mock::MockAdapter()));
+  if (!adapterName)
+  {
+    DSBLOG_ERROR("need --adapter=<adaptername> argument");
+    exit(1);
+  }
 
-  DSB()->Initialize();
+  adapter::Loader loader(adapterName);
+  if (!loader.bind())
+    exit(1);
+
+  std::shared_ptr<adapter::Adapter> adapter = loader.create();
+  bridge::Bridge::InitializeSingleton(adapter);
+
+  try
+  {
+    DSB()->Initialize(configFile);
+  }
+  catch (std::exception const& err)
+  {
+    DSBLOG_ERROR("failed to initialize dsb. %s", err.what());
+    exit(1);
+  }
 
 
   #if 0

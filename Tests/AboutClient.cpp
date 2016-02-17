@@ -128,6 +128,8 @@ private:
   {
     size_t n = aod.GetPaths(NULL, 0);
 
+    printf("num paths: %d\n", (int) n);
+
     std::vector<char const *> paths;
     paths.resize(n);
     paths.reserve(n);

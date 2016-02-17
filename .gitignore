@@ -3,3 +3,6 @@
 *.swp
 moc-adapter
 Tests/*Test
+dist
+*.so
+alljoyndsb
