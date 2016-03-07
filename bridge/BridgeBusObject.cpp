@@ -28,6 +28,8 @@ namespace
 {
   DSB_DECLARE_LOGNAME(BusObject);
 
+  const int32_t kMethodTimeoutPeriod = 10000;
+
   // TODO: new class (InterfaceCache and/or InterfaceBuilder
   typedef std::map< std::string, std::shared_ptr<adapter::Interface> > InterfaceCache;
   InterfaceCache s_interfaceCache;
@@ -347,16 +349,22 @@ bridge::BusObject::Get(char const* interface, char const* property, ajn::MsgArg&
   adapter::Interface const& adapterInterface = *(itr->second);
   adapter::Property const*  adapterProperty = adapterInterface.FindProperty(property);
   adapter::Value            adapterValue;
-  adapter::IoRequest::Pointer adapterRequest;
+  adapter::IoRequest::Pointer adapterRequest(new adapter::IoRequest());
   adapter::Status st = m_adapter->GetProperty(m_adapterDevice, adapterInterface, *adapterProperty,
       adapterValue, adapterRequest);
 
   if (st == 0)
   {
-    AllJoynHelper::ValueToMsgArg(adapterValue, arg);
+    if (!adapterRequest->Wait(kMethodTimeoutPeriod)) {
+      DSBLOG_ERROR("timeout waiting for Adapter Get");
+      return ER_FAIL;
+    }
+    else {
+      AllJoynHelper::ValueToMsgArg(adapterValue, arg);
+      return ER_OK;
+    }
   }
-
-  return ER_OK;
+  return ER_FAIL;
 }
 
 QStatus
@@ -375,13 +383,17 @@ bridge::BusObject::Set(char const* interface, char const* property, ajn::MsgArg&
   adapter::Value              adapterValue;
   AllJoynHelper::MsgArgToValue(msg, adapterValue);
 
-  adapter::IoRequest::Pointer adapterRequest;
+  adapter::IoRequest::Pointer adapterRequest(new adapter::IoRequest());
   adapter::Status st = m_adapter->SetProperty(m_adapterDevice, adapterInterface, *adapterProperty,
     adapterValue, adapterRequest);
 
   if (st != 0)
   {
     DSBLOG_ERROR("failed to set property %s. %s", property, m_adapter->GetStatusText(st).c_str());
+    return ER_FAIL;
+  }
+  else if (!adapterRequest->Wait(kMethodTimeoutPeriod)) {
+    DSBLOG_ERROR("timeout waiting for Adapter Set");
     return ER_FAIL;
   }
 
@@ -463,14 +475,40 @@ bridge::BusObject::MethodHandler(ajn::InterfaceDescription::Member const* member
 
   adapter::Interface const&   adapterInterface = *(itr->second);
   adapter::Method    const*   adapterMethod = adapterInterface.FindMethod(member->name.c_str());
-  adapter::IoRequest::Pointer adapterRequest;
+  adapter::IoRequest::Pointer adapterRequest(new adapter::IoRequest());
   adapter::Value              inarg;
   adapter::Value              outarg;
+
+  // get the arguments from the message
+  size_t numArgs;
+  const ajn::MsgArg* msgArgs;
+  msg->GetArgs(numArgs, msgArgs);
+  AllJoynHelper::MsgArgToValue(*msgArgs, inarg);
+
   adapter::Status st = m_adapter->InvokeMethod(m_adapterDevice, adapterInterface, *adapterMethod, inarg,
       outarg, adapterRequest);
 
   if (st == ER_OK)
   {
+    if (!adapterRequest->Wait(kMethodTimeoutPeriod)) {
+      DSBLOG_ERROR("timeout waiting for Adapter method");
+    }
+    else {
+      // fill args to respond
+      ajn::MsgArg outMsg;
+      AllJoynHelper::ValueToMsgArg(outarg, outMsg);
+      int numArgs = 0;
+      if (!outarg.IsEmpty()) {
+        numArgs = outarg.Length();
+        if (numArgs == -1) {
+          numArgs = 1;
+        }
+      }
+      QStatus status = MethodReply(msg, &outMsg, (size_t)numArgs);
+      if (ER_OK != status) {
+          DSBLOG_ERROR("MethodReply Error %s\n", QCC_StatusText(status));
+      }
+    }
   }
   else
   {

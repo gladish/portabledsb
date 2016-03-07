@@ -9,6 +9,7 @@ SRCS=\
      bridge/BridgeBusObject.cpp \
      bridge/BridgeConfig.cpp \
      bridge/ConfigManager.cpp \
+     bridge/BridgeError.cpp \
      main.cpp
 
 ADAPTER_SRCS=\

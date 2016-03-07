@@ -129,6 +129,12 @@ bridge::AllJoynHelper::MsgArgToValue(ajn::MsgArg const& m, adapter::Value& v)
   QStatus st = ER_OK;
   std::string const sig = ajn::MsgArg::Signature(&m, 1).c_str();
 
+  // could be no args
+  if (sig.empty()) {
+    v = adapter::Value();
+    return ER_OK;
+  }
+
   auto itr = s_signatureToType.find(sig);
   DSB_ASSERT(itr != s_signatureToType.end());
 
@@ -136,6 +142,7 @@ bridge::AllJoynHelper::MsgArgToValue(ajn::MsgArg const& m, adapter::Value& v)
   {
     case adapter::TypeId::Null:    st = ER_OK; break;
     case adapter::TypeId::Boolean: st = Extract<bool>(m, sig, v); break;
+    case adapter::TypeId::UInt8:   st = Extract<uint8_t>(m, sig, v); break;
     case adapter::TypeId::Int16:   st = Extract<int16_t>(m, sig, v); break;
     case adapter::TypeId::UInt16:  st = Extract<uint16_t>(m, sig, v); break;
     case adapter::TypeId::Int32:   st = Extract<int32_t>(m, sig, v); break;
@@ -299,7 +306,12 @@ QStatus
 bridge::AllJoynHelper::ValueToMsgArg(adapter::Value const& val, ajn::MsgArg& m)
 {
   QStatus st = ER_OK;
-
+  
+  m.Clear();
+  // empty is valid
+  if (val.IsEmpty()) {
+    return st;
+  }
   std::string const sig = GetSignature(val.GetType());
 
   switch (val.GetType())
@@ -310,63 +322,63 @@ bridge::AllJoynHelper::ValueToMsgArg(adapter::Value const& val, ajn::MsgArg& m)
     case adapter::TypeId::Boolean:
     {
       bool b = val.ToBoolean();
-      st = m.Set(sig.c_str(), &b);
+      st = m.Set(sig.c_str(), b);
     }
     break;
 
     case adapter::TypeId::UInt8:
     {
       uint8_t i = val.ToUInt8();
-      st = m.Set(sig.c_str(), &i);
+      st = m.Set(sig.c_str(), i);
     }
     break;
 
     case adapter::TypeId::Int16:
     {
       int16_t i = val.ToInt16();
-      st = m.Set(sig.c_str(), &i);
+      st = m.Set(sig.c_str(), i);
     }
     break;
 
     case adapter::TypeId::UInt16:
     {
       uint16_t u = val.ToUInt16();
-      st = m.Set(sig.c_str(), &u);
+      st = m.Set(sig.c_str(), u);
     }
     break;
 
     case adapter::TypeId::Int32:
     {
       int32_t i = val.ToInt32();
-      st = m.Set(sig.c_str(), &i);
+      st = m.Set(sig.c_str(), i);
     }
     break;
 
     case adapter::TypeId::UInt32:
     {
       uint32_t u = val.ToUInt32();
-      st = m.Set(sig.c_str(), &u);
+      st = m.Set(sig.c_str(), u);
     }
     break;
 
     case adapter::TypeId::Int64:
     {
       int64_t l = val.ToInt64();
-      st = m.Set(sig.c_str(), &l);
+      st = m.Set(sig.c_str(), l);
     }
     break;
 
     case adapter::TypeId::UInt64:
     {
       uint64_t l = val.ToUInt64();
-      st = m.Set(sig.c_str(), &l);
+      st = m.Set(sig.c_str(), l);
     }
     break;
 
     case adapter::TypeId::Double:
     {
       double d = val.ToDouble();
-      st = m.Set(sig.c_str(), &d);
+      st = m.Set(sig.c_str(), d);
     }
     break;
 
