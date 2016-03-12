@@ -46,6 +46,8 @@ set(CPACK_PACKAGE_DEFAULT_LOCATION "${CMAKE_INSTALL_PREFIX}")
 
 set(CPACK_DEBIAN_ARCHITECTURE ${CMAKE_SYSTEM_PROCESSOR})
 set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON)
+set(CPACK_SET_DESTDIR On)
+set(CMAKE_INSTALL_PREFIX ${CPACK_INSTALL_PREFIX})
 
 include(CPack)
 
@@ -165,6 +167,7 @@ endforeach()
 #   builddir$ make install
 
 # build debian package and install:
+#   builddir$ cmake /path/to/srcdir -DCMAKE_PREFIX_PATH=/usr
 #   builddir$ make package
 #   builddir$ sudo dpkg -i portabledsb*.deb
 #   builddir$ dpkg -L portabledsb
