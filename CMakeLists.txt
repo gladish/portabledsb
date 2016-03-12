@@ -136,9 +136,9 @@ set(libdir      ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR})
 set(includedir  ${CMAKE_INSTALL_PREFIX}/include)
 set(PROJECT_CXXFLAGS "${PROJECT_CXX_FLAGS}")
 set(PROJECT_LIBS "-lalljoyndsb_bridge -lalljoyndsb")
-configure_file(${PROJECT_SOURCE_DIR}/cmake/libportabledsb.pc.in
-  ${CMAKE_CURRENT_BINARY_DIR}/lib${CMAKE_PROJECT_NAME}.pc @ONLY)
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/lib${CMAKE_PROJECT_NAME}.pc DESTINATION share/pkgconfig)
+configure_file(${PROJECT_SOURCE_DIR}/cmake/portabledsb.pc.in
+  ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_PROJECT_NAME}.pc @ONLY)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_PROJECT_NAME}.pc DESTINATION share/pkgconfig)
 
 #--------------------------------------------------------------------------------------------------
 # additional install targets:
