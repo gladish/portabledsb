@@ -83,6 +83,15 @@ find_package(UUID REQUIRED )
 # find OpenSSL library 
 find_package(OpenSSL)
 
+# find GTest
+find_package(GTest)
+if(GTEST_FOUND)
+  enable_testing()
+  message(STATUS "testing is enabled")
+else()
+  message(AUTHOR_WARNING "if you want to enable testing, please set GTEST_ROOT (as a CMake or environment variable) to the root directory of the gtest install prefix")
+endif()
+
 #--------------------------------------------------------------------------------------------------
 # common compiler/linker settings
 
@@ -114,6 +123,7 @@ add_definitions(-DQCC_OS_GROUP_POSIX)
 #--------------------------------------------------------------------------------------------------
 # build targets
 
+
 # alljoyndsb library:
 add_subdirectory(common) 
 
@@ -139,6 +149,12 @@ set(PROJECT_LIBS "-lalljoyndsb_bridge -lalljoyndsb")
 configure_file(${PROJECT_SOURCE_DIR}/cmake/portabledsb.pc.in
   ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_PROJECT_NAME}.pc @ONLY)
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_PROJECT_NAME}.pc DESTINATION share/pkgconfig)
+
+# tests:
+if(GTEST_FOUND)
+  add_subdirectory(Tests)
+endif()
+
 
 #--------------------------------------------------------------------------------------------------
 # additional install targets:
@@ -175,7 +191,4 @@ endforeach()
 # uninstall debian package
 #   $ sudo dpkg -P portabledsb
 
-
-#--------------------------------------------------------------------------------------------------
-# todo: add tests
 
