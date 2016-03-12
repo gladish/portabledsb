@@ -1,0 +1,10 @@
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+libdir=@libdir@
+includedir=@includedir@
+
+Name: libportabledsb
+Description: A portable C++ version of the AllJoyn DSB 
+Version: @VERSION@
+Cflags: -I${includedir} @PROJECT_CXXFLAGS@
+Libs: -L${libdir} @PROJECT_LIBS@
