@@ -1,14 +1,14 @@
 cmake_minimum_required(VERSION 2.6)
 
 #--------------------------------------------------------------------------------------------------
-project(portabledsb CXX)
-set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
-
-set(PACKAGE_NAME alljoyndsb)
+project(PortableDSB CXX)
+set(PACKAGE_NAME portabledsb)
 set(PACKAGE_VERSION_MAJOR 1)
 set(PACKAGE_VERSION_MINOR 0)
 set(PACKAGE_VERSION_PATCH 0)
 set(PACKAGE_VERSION "${PACKAGE_VERSION_MAJOR}.${PACKAGE_VERSION_MINOR}.${PACKAGE_VERSION_PATCH}")
+
+set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
 #--------------------------------------------------------------------------------------------------
 # installation directories
@@ -25,16 +25,12 @@ endif()
 
 #--------------------------------------------------------------------------------------------------
 # build debian package:
-#    make package 
-#    sudo dpkg -i ./portable-<version>-Linux.deb
-#    /usr/bin/moc-adapter --adapter libmockadapter.so --config /path/to/config.xml
-
 include(InstallRequiredSystemLibraries)
 
 set(CPACK_GENERATOR "DEB")
-set(CPACK_SOURCE_PACKAGE_FILE_NAME "${CMAKE_PROJECT_NAME}-dev")
-set(CPACK_PACKAGE_NAME ${CMAKE_PROJECT_NAME})
-set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "${CMAKE_PROJECT_NAME}-A portable C++ version of the AllJoyn DSB.")
+set(CPACK_SOURCE_PACKAGE_FILE_NAME "${PACKAGE_NAME}-dev")
+set(CPACK_PACKAGE_NAME ${PACKAGE_NAME})
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "${CMAKE_PROJECT_NAME} - A portable C++ version of the AllJoyn DSB.")
 set(CPACK_PACKAGE_VENDOR "Comcast Cable Communications Management,LLC")
 set(CPACK_PACKAGE_CONTACT "info@comcast.com")
 set(CPACK_PACKAGE_VERSION_MAJOR "${PACKAGE_VERSION_MAJOR}")
@@ -47,7 +43,7 @@ set(CPACK_PACKAGE_DEFAULT_LOCATION "${CMAKE_INSTALL_PREFIX}")
 set(CPACK_DEBIAN_ARCHITECTURE ${CMAKE_SYSTEM_PROCESSOR})
 set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON)
 set(CPACK_SET_DESTDIR On)
-set(CMAKE_INSTALL_PREFIX ${CPACK_INSTALL_PREFIX})
+set(CPACK_INSTALL_PREFIX ${CMAKE_INSTALL_PREFIX})
 
 include(CPack)
 
@@ -147,8 +143,8 @@ set(includedir  ${CMAKE_INSTALL_PREFIX}/include)
 set(PROJECT_CXXFLAGS "${PROJECT_CXX_FLAGS}")
 set(PROJECT_LIBS "-lalljoyndsb_bridge -lalljoyndsb")
 configure_file(${PROJECT_SOURCE_DIR}/cmake/portabledsb.pc.in
-  ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_PROJECT_NAME}.pc @ONLY)
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_PROJECT_NAME}.pc DESTINATION share/pkgconfig)
+  ${CMAKE_CURRENT_BINARY_DIR}/${PACKAGE_NAME}.pc @ONLY)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${PACKAGE_NAME}.pc DESTINATION share/pkgconfig)
 
 # tests:
 if(GTEST_FOUND)
@@ -175,20 +171,19 @@ endforeach()
 
 # configure:
 #     builddir$ cmake /path/to/srcdir
-#   if a library cannot be found, try to add the library prefix to the search path 'CMAKE_PREFIX_PATH':
-#     builddir$ cmake /path/to/srcdir -DCMAKE_PREFIX_PATH=/opt/alljoyn
+#
+#   if a library cannot be found, try adding the library prefix to the search path 'CMAKE_PREFIX_PATH':
+#   if optional gtest cannot be found, try setting GTEST_ROOT to the install prefix
+#
+#     builddir$ cmake /path/to/srcdir -DCMAKE_PREFIX_PATH=/opt/alljoyn -DGTEST_ROOT=/opt/gtest
 
 # build and install:
-#   builddir$ make
-#   builddir$ make install
+#     builddir$ make
+#     builddir$ make install
 
 # build debian package and install:
-#   builddir$ cmake /path/to/srcdir -DCMAKE_PREFIX_PATH=/usr
-#   builddir$ make package
-#   builddir$ sudo dpkg -i portabledsb*.deb
-#   builddir$ dpkg -L portabledsb
-
-# uninstall debian package
-#   $ sudo dpkg -P portabledsb
+#     builddir$ cmake /path/to/srcdir -DCMAKE_PREFIX_PATH=/usr
+#     builddir$ fakeroot make package
+#     builddir$ sudo dpkg -i portabledsb*.deb
 
 
